@@ -200,15 +200,47 @@ const JobsPage = () => {
   };
 
   const getJobStats = () => {
+    // Add debug logging to see what statuses we have
+    console.log('Jobs for stats calculation:', jobs.map(job => ({
+      jobId: job.jobId,
+      status: job.status,
+    })));
+  
     const total = jobs.length;
-    const completed = jobs.filter(job => job.status === 'COMPLETED').length;
-    const inProgress = jobs.filter(job => job.status === 'IN_PROGRESS').length;
-    const failed = jobs.filter(job => job.status === 'ERROR').length;
-    const paused = jobs.filter(job => job.status === 'PAUSED').length;
-    const ready = jobs.filter(job => job.status === 'READY').length;
+    const completed = jobs.filter(job => 
+      job.status?.toUpperCase() === 'OK' || 
+      job.status?.toUpperCase() === 'COMPLETED'
+    ).length;
+    const inProgress = jobs.filter(job => 
+      job.status?.toUpperCase() === 'IN_PROGRESS'
+    ).length;
+    const failed = jobs.filter(job => 
+      job.status?.toUpperCase() === 'ERROR' ||
+      (job.activeAlerts && job.activeAlerts.length > 0)
+    ).length;
+    const paused = jobs.filter(job => 
+      job.status?.toUpperCase() === 'PAUSED'
+    ).length;
+    const ready = jobs.filter(job => 
+      job.status?.toUpperCase() === 'READY' || 
+      !job.status || 
+      job.status === 'N/A'
+    ).length;
     const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
+  
+    // Debug log the calculated stats
+    console.log('Calculated stats:', {
+      total,
+      completed,
+      inProgress,
+      failed,
+      ready,
+      paused,
+      successRate
+    });
+  
     return { total, completed, inProgress, failed, ready, paused, successRate };
+  
   };
 
   const toggleRowExpansion = (jobId) => {

@@ -11,10 +11,42 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '../components/ui/select';
-import { Pause, Play, RefreshCw, Search, Loader2 } from 'lucide-react';
+import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react'; // Import the Flame icon
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
 import DashboardLayout from '../components/layout/DashboardLayout';
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'N/A';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).format(date);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return 'N/A';
+  }
+};
 
 const TransferManager = () => {
   const [transfers, setTransfers] = useState([]);
@@ -30,7 +62,6 @@ const TransferManager = () => {
 
   const fileNameWithWildcard = `**/${fileName}`;
 
-  // Fetch storage profiles
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
@@ -76,7 +107,6 @@ const TransferManager = () => {
     fetchProfiles();
   }, []);
 
-  // Fetch jobs and storage profiles
   const fetchData = async () => {
     try {
       const headers = await getAuthHeaders();
@@ -377,7 +407,10 @@ const TransferManager = () => {
           </Card>
         ) : (
           filteredTransfers.map(transfer => (
-            <Card key={transfer.jobId}>
+            <Card key={transfer.jobId} className="relative"> {/* Add relative positioning */}
+              {transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") && ( // Check for hotfolder trigger
+                <Flame className="absolute top-2 right-2 h-6 w-6 text-red-500" /> // Position the icon
+              )}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg">
                   {transfer.name}
@@ -455,9 +488,9 @@ const TransferManager = () => {
                   )}
 
                   <div className="flex justify-between text-xs text-gray-500 pt-2">
-                    <span>Job ID: {transfer.jobId}</span>
+                    <span>Job Name: {transfer.name}</span>
                     <span>
-                      Last Activity: {new Date(transfer.modifiedOn).toLocaleString()}
+                      Last Activity: {new Date(transfer.lastModifiedOn).toLocaleString()}
                     </span>
                   </div>
                 </div>

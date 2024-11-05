@@ -19,7 +19,7 @@ const LoginPage = () => {
         setIsLoading(true);
 
         // Set default email and password if fields are empty
-        const defaultEmail = 'test@test.com';
+        const defaultEmail = 'testing@test.com';
         const defaultPassword = 'Password123';
 
         const loginEmail = email.trim() === '' ? defaultEmail : email;
