@@ -1,0 +1,160 @@
+JetJobSearchRequestBody_Schema
+
+{
+query	JetJobSearchRequestBody_query{
+description:	
+
+Filter used to search Jet job names
+text	string
+maxLength: 100
+minLength: 1
+example: Example Jet Job Name
+}
+sortBy	string
+example: lastActivity
+default: lastActivity
+
+Sets the sort parameter used to order results. Valid options are lastActivity, jobName, and status.
+Enum:
+[ lastActivity, jobName, status ]
+sortOrder	string
+example: desc
+default: desc
+
+Indicates the order of sorting either descending (desc) or ascending (asc)
+Enum:
+[ desc, asc ]
+offset	number
+minimum: 0
+example: 100
+default: 0
+
+Configures the number of jobs to skip in the results, which can be used to retrieve multiple pages of results.
+limit	number
+maximum: 100
+minimum: 0
+example: 100
+default: 100
+
+Sets the limit on the number of search results to return per page of results.
+filters	JetJobSearchRequestBody_filters{
+showPartnerJobs	boolean
+example: true
+default: true
+
+Set whether to show partner jobs using true or false
+routeId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Set the route to search for specific jobs
+endpointId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Source or destination endpointId that returned jobs must have
+userEmail	string($email)
+example: user@example.com
+
+Scope the search results to a specific View Only user account
+userRoleType	string
+
+Scope search results based on whether the user is a Jet View Only user or a Jet IT Administrator
+Enum:
+[ JET_VIEW_ONLY, JET_ADMIN ]
+storageProfileId	string($uuid)
+example: 6c65dd5f-99cc-4b4e-b8ad-e9dd96d11e2e
+
+Source or destination storageProfileId that returned jobs must have
+jobIds	[
+example: List [ "4cec549d-cb09-472e-aaa1-360e70a715b2", "ea5e8086-e34a-4e03-b43f-ab1a6f85e4c8" ]
+
+An array of jobIds to return matching jobs for
+string($uuid)]
+lastActivity	JetJobSearchRequestBody_filters_lastActivity{
+before	string($date-time)
+example: 2021-01-01T00:00:00Z
+
+Return jobs with a lastActivity before or equal to this date.
+after	string($date-time)
+example: 2020-01-01T00:00:00Z
+
+Return jobs with a lastActivity after or equal to this date.
+}
+}
+}
+JetSearchJobAlertTypestring
+
+The type of the alert.
+
+    SOURCE_ENDPOINT_OFFLINE: The source endpoint for this job is offline
+    DESTINATION_ENDPOINT_OFFLINE: The destination endpoint for this job is offline
+    MONITOR_FILE_PATH_INVALID: The file path provided for this monitor is invalid
+    MONITOR_FILE_PATH_UNREACHABLE: The file path provided does not exist or the SDCX Server does not have the proper permissions to access it.
+    MONITOR_REQUEST_TO_START_FAILED: The SDCX Server received the monitor start request but there was an error in processing the request.
+    MONITOR_ERROR: A catchall for all other types of monitor errors.
+    JOB_RECENTLY_FAILED: A recent (but not current) execution of this job has failed.
+    IN_PROGRESS_TRANSFER_HAS_ERRORS: There are errors in the current transfer.
+
+Enum:
+[ SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE, MONITOR_PENDING, MONITOR_FILE_PATH_INVALID, MONITOR_FILE_PATH_UNREACHABLE, MONITOR_REQUEST_TO_START_FAILED, MONITOR_ERROR, JOB_RECENTLY_FAILED, IN_PROGRESS_TRANSFER_HAS_ERRORS ]
+JetJobSearchRequestBody_query{
+description:	
+
+Filter used to search Jet job names
+text	string
+maxLength: 100
+minLength: 1
+example: Example Jet Job Name
+}
+JetJobSearchRequestBody_filters{
+showPartnerJobs	boolean
+example: true
+default: true
+
+Set whether to show partner jobs using true or false
+routeId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Set the route to search for specific jobs
+endpointId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Source or destination endpointId that returned jobs must have
+userEmail	string($email)
+example: user@example.com
+
+Scope the search results to a specific View Only user account
+userRoleType	string
+
+Scope search results based on whether the user is a Jet View Only user or a Jet IT Administrator
+Enum:
+[ JET_VIEW_ONLY, JET_ADMIN ]
+storageProfileId	string($uuid)
+example: 6c65dd5f-99cc-4b4e-b8ad-e9dd96d11e2e
+
+Source or destination storageProfileId that returned jobs must have
+jobIds	[
+example: List [ "4cec549d-cb09-472e-aaa1-360e70a715b2", "ea5e8086-e34a-4e03-b43f-ab1a6f85e4c8" ]
+
+An array of jobIds to return matching jobs for
+string($uuid)]
+lastActivity	JetJobSearchRequestBody_filters_lastActivity{
+before	string($date-time)
+example: 2021-01-01T00:00:00Z
+
+Return jobs with a lastActivity before or equal to this date.
+after	string($date-time)
+example: 2020-01-01T00:00:00Z
+
+Return jobs with a lastActivity after or equal to this date.
+}
+}
+JetJobSearchRequestBody_filters_lastActivity{
+before	string($date-time)
+example: 2021-01-01T00:00:00Z
+
+Return jobs with a lastActivity before or equal to this date.
+after	string($date-time)
+example: 2020-01-01T00:00:00Z
+
+Return jobs with a lastActivity after or equal to this date.
+}
