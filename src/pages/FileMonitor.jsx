@@ -8,6 +8,15 @@ import { Search, FileText, Loader2 } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
 
+
+  /**
+   * The FileMonitor component fetches a list of files being transferred from the Signiant Platform API and displays them in a table.
+   * The table displays the file path, size, status, last activity time, and type.
+   * The component also displays a set of stats cards above the table, which show the total number of files, the number of files in each state, and the total size of all files.
+   * The component also includes a search bar which allows the user to filter the files by file path.
+   * The component is refreshed every 30 seconds.
+   */
+
 const FileMonitor = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,6 +54,13 @@ const FileMonitor = () => {
     const interval = setInterval(fetchFiles, 30000);
     return () => clearInterval(interval);
   }, []);
+
+
+  /**
+   * Converts a number of bytes to a human-readable string (e.g. '3.2 KB')
+   * @param {number} bytes - The number of bytes to format
+   * @returns {string} A string representation of the number of bytes
+   */
 
   const formatBytes = (bytes) => {
     if (bytes === 0) return '0 Bytes';

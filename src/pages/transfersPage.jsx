@@ -11,10 +11,10 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '../components/ui/select';
-import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react'; // Import the Flame icon
+import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
-import DashboardLayout from '../components/layout/DashboardLayout';
+
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -85,14 +85,14 @@ const TransferManager = () => {
             profile.storageProfileId && 
             profile.storageProfileType === 'ON_PREMISE_FILE_STORAGE'
           )
-          .sort((a, b) => a.name.localeCompare(b.name)); // Sort sources alphabetically
+          .sort((a, b) => a.name.localeCompare(b.name));
 
         const destinationProfiles = data.items
           .filter(profile =>
             profile.storageProfileId &&
             profile.storageProfileType === 'AWS_S3'
           )
-          .sort((a, b) => a.name.localeCompare(b.name)); // Sort destinations alphabetically
+          .sort((a, b) => a.name.localeCompare(b.name));
 
         setSources(sourceProfiles);
         setDestinations(destinationProfiles);
@@ -259,43 +259,44 @@ const TransferManager = () => {
       const matchesStatus = statusFilter === "all" || transfer.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
+  // ... (keep all the state and functions unchanged until the return statement)
 
-  const content = (
+  return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Transfer Manager</h1>
+        <h1 className="text-2xl font-bold dark:text-white">Transfer Manager</h1>
         <Button onClick={fetchData} size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Refresh
         </Button>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle>Create Transfer Job</CardTitle>
+          <CardTitle className="dark:text-white">Create Transfer Job</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium dark:text-gray-200">
                 Source Profile (On-Premise)
               </label>
               <Select
                 value={selectedSource}
                 onValueChange={setSelectedSource}
               >
-                <SelectTrigger className="bg-blue-50 border-blue-200 hover:border-blue-300 focus:ring-blue-500">
+                <SelectTrigger className="bg-blue-50 border-blue-200 hover:border-blue-300 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                   <SelectValue placeholder="Select source profile" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-blue-200">
-                  <div className="py-2 px-2 text-sm font-medium text-blue-600 bg-blue-50">
+                <SelectContent className="bg-white border-blue-200 dark:bg-gray-800 dark:border-gray-700">
+                  <div className="py-2 px-2 text-sm font-medium text-blue-600 bg-blue-50 dark:bg-gray-700 dark:text-blue-400">
                     On-Premise Storage
                   </div>
                   {sources.map(profile => (
                     <SelectItem
                       key={profile.storageProfileId}
                       value={profile.storageProfileId}
-                      className="hover:bg-blue-50 focus:bg-blue-100"
+                      className="hover:bg-blue-50 focus:bg-blue-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
                     >
                       {profile.name}
                     </SelectItem>
@@ -305,25 +306,25 @@ const TransferManager = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium dark:text-gray-200">
                 Destination Profile (AWS S3)
               </label>
               <Select
                 value={selectedDestination}
                 onValueChange={setSelectedDestination}
               >
-                <SelectTrigger className="bg-green-50 border-green-200 hover:border-green-300 focus:ring-green-500">
+                <SelectTrigger className="bg-green-50 border-green-200 hover:border-green-300 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
                   <SelectValue placeholder="Select destination profile" />
                 </SelectTrigger>
-                <SelectContent className="bg-white border-green-200">
-                  <div className="py-2 px-2 text-sm font-medium text-green-600 bg-green-50">
+                <SelectContent className="bg-white border-green-200 dark:bg-gray-800 dark:border-gray-700">
+                  <div className="py-2 px-2 text-sm font-medium text-green-600 bg-green-50 dark:bg-gray-700 dark:text-green-400">
                     AWS S3 Storage
                   </div>
                   {destinations.map(profile => (
                     <SelectItem
                       key={profile.storageProfileId}
                       value={profile.storageProfileId}
-                      className="hover:bg-green-50 focus:bg-green-100"
+                      className="hover:bg-green-50 focus:bg-green-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
                     >
                       {profile.name}
                     </SelectItem>
@@ -333,7 +334,7 @@ const TransferManager = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium dark:text-gray-200">
                 MXF File Name
               </label>
               <Input
@@ -342,8 +343,9 @@ const TransferManager = () => {
                 onChange={(e) => setFileName(e.target.value)}
                 placeholder="Enter filename (e.g., DELETETEST_10242024_01d.mxf)"
                 required
+                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
               />
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 File must have .mxf extension
               </p>
             </div>
@@ -366,34 +368,34 @@ const TransferManager = () => {
             placeholder="Search transfers..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full"
-            prefix={<Search className="h-4 w-4" />}
+            className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
+            prefix={<Search className="h-4 w-4 dark:text-gray-400" />}
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 hover:border-gray-300 focus:ring-gray-500">
+          <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 hover:border-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
-          <SelectContent className="bg-white border-gray-200">
-            <div className="py-2 px-2 text-sm font-medium text-gray-600 bg-gray-50">
+          <SelectContent className="bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
+            <div className="py-2 px-2 text-sm font-medium text-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
               Filter by Status
             </div>
-            <SelectItem value="all" className="hover:bg-gray-50 focus:bg-gray-100">
+            <SelectItem value="all" className="hover:bg-gray-50 focus:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               All Statuses
             </SelectItem>
-            <SelectItem value="READY" className="hover:bg-green-50 focus:bg-green-100">
+            <SelectItem value="READY" className="hover:bg-green-50 focus:bg-green-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               Ready
             </SelectItem>
-            <SelectItem value="IN_PROGRESS" className="hover:bg-blue-50 focus:bg-blue-100">
+            <SelectItem value="IN_PROGRESS" className="hover:bg-blue-50 focus:bg-blue-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               In Progress
             </SelectItem>
-            <SelectItem value="COMPLETED" className="hover:bg-emerald-50 focus:bg-emerald-100">
+            <SelectItem value="COMPLETED" className="hover:bg-emerald-50 focus:bg-emerald-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               Completed
             </SelectItem>
-            <SelectItem value="ERROR" className="hover:bg-red-50 focus:bg-red-100">
+            <SelectItem value="ERROR" className="hover:bg-red-50 focus:bg-red-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               Error
             </SelectItem>
-            <SelectItem value="PAUSED" className="hover:bg-yellow-50 focus:bg-yellow-100">
+            <SelectItem value="PAUSED" className="hover:bg-yellow-50 focus:bg-yellow-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
               Paused
             </SelectItem>
           </SelectContent>
@@ -402,19 +404,19 @@ const TransferManager = () => {
 
       <div className="space-y-4">
         {filteredTransfers.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center text-gray-500">
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
+            <CardContent className="p-6 text-center text-gray-500 dark:text-gray-400">
               No transfers found
             </CardContent>
           </Card>
         ) : (
           filteredTransfers.map(transfer => (
-            <Card key={transfer.jobId} className="relative">
+            <Card key={transfer.jobId} className="relative dark:bg-gray-800 dark:border-gray-700">
               {transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") && (
                 <Flame className="absolute top-2 right-2 h-6 w-6 text-red-500" />
               )}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-lg">
+                <CardTitle className="text-lg dark:text-white">
                   {transfer.name}
                 </CardTitle>
                 <div className="flex items-center gap-2">
@@ -432,7 +434,7 @@ const TransferManager = () => {
                       size="sm" 
                       variant="outline" 
                       onClick={() => handleJobAction(transfer.jobId, "PAUSE")}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       <Pause className="h-4 w-4" />
                     </Button>
@@ -442,7 +444,7 @@ const TransferManager = () => {
                       size="sm" 
                       variant="outline"
                       onClick={() => handleJobAction(transfer.jobId, "RESUME")}
-                      className="h-8 w-8 p-0"
+                      className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       <Play className="h-4 w-4" />
                     </Button>
@@ -453,14 +455,14 @@ const TransferManager = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Source</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Source</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {transfer.sourceProfile?.name || 'Unknown'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Destination</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Destination</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {transfer.destinationProfile?.name || 'Unknown'}
                       </p>
                     </div>
@@ -476,7 +478,7 @@ const TransferManager = () => {
                         } 
                         className="h-2"
                       />
-                      <div className="flex justify-between text-sm text-gray-500">
+                      <div className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
                         <span>
                           {transfer.filesRemaining} files remaining
                         </span>
@@ -489,7 +491,7 @@ const TransferManager = () => {
                     </div>
                   )}
 
-                  <div className="flex justify-between text-xs text-gray-500 pt-2">
+                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 pt-2">
                     <span>Job Name: {transfer.name}</span>
                     <span>
                       Last Activity: {new Date(transfer.lastModifiedOn).toLocaleString()}
@@ -503,8 +505,6 @@ const TransferManager = () => {
       </div>
     </div>
   );
-
-  return <DashboardLayout>{content}</DashboardLayout>;
 };
 
 export default TransferManager;
