@@ -1,3 +1,4 @@
+{/* Previous imports remain the same */}
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
@@ -21,12 +22,14 @@ import {
   ChevronDown, 
   ChevronRight, 
   PauseCircle,
-  Trash2
+  Trash2,
+  FolderInput
 } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
-import { deleteJob } from '../lib/signiant';
+import { deleteJob, updateJobTrigger } from '../lib/signiant';
 
+{/* DeleteConfirmationDialog component remains the same */}
 const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, jobName }) => {
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -110,10 +113,21 @@ const JobsPage = () => {
       const jobsWithDetails = await Promise.all(data.items.map(async (job) => {
         let transferRate = null;
         
-        // Get monitor status
+        // Get monitor status and action status
         const monitorStatus = job.triggers?.[0]?.monitor?.status?.state;
-        const jobStatus = monitorStatus || job.actions?.[0]?.status?.state || 'READY';
+        const actionStatus = job.actions?.[0]?.status?.state;
+        
+        // Prioritize IN_PROGRESS status
+        let jobStatus = 'READY';
+        if (monitorStatus === 'IN_PROGRESS' || actionStatus === 'IN_PROGRESS') {
+          jobStatus = 'IN_PROGRESS';
+        } else if (monitorStatus) {
+          jobStatus = monitorStatus;
+        } else if (actionStatus) {
+          jobStatus = actionStatus;
+        }
   
+        // Always fetch transfer rate for active jobs
         if (jobStatus === 'IN_PROGRESS') {
           try {
             const transferResponse = await fetch(
@@ -122,7 +136,9 @@ const JobsPage = () => {
             );
             if (transferResponse.ok) {
               const transferData = await transferResponse.json();
-              transferRate = transferData.items[0]?.currentRateBitsPerSecond;
+              if (transferData.items && transferData.items.length > 0) {
+                transferRate = transferData.items[0]?.currentRateBitsPerSecond || 0;
+              }
             }
           } catch (error) {
             console.error('Error fetching transfer details:', error);
@@ -131,16 +147,9 @@ const JobsPage = () => {
   
         // Clean up the job name
         const jobName = job.name || 'Unnamed Job';
-        // Remove 'Hot Folder - ' prefix and timestamp suffix if present
         const cleanName = jobName
           .replace('Hot Folder - ', '')
-          .replace(/\s+-\s+\d{8}_\d{6}$/, ''); // Removes timestamp pattern at the end
-  
-        console.log('Processing job:', {
-          originalName: job.name,
-          cleanName: cleanName,
-          jobId: job.jobId
-        });
+          .replace(/\s+-\s+\d{8}_\d{6}$/, '');
   
         return {
           ...job,
@@ -153,7 +162,8 @@ const JobsPage = () => {
           actions: job.actions || [],
           createdByAuthId: job.createdByAuthId,
           lastModifiedByAuthId: job.lastModifiedByAuthId,
-          createdOn: job.createdOn
+          createdOn: job.createdOn,
+          triggerType: job.triggers?.[0]?.type || 'MANUAL'
         };
       }));
   
@@ -171,10 +181,20 @@ const JobsPage = () => {
     }
   };
 
+  // Add polling for active transfers
   useEffect(() => {
     fetchJobs();
-  }, [toast]);
+    const interval = setInterval(() => {
+      const hasActiveTransfers = jobs.some(job => job.status === 'IN_PROGRESS');
+      if (hasActiveTransfers) {
+        fetchJobs();
+      }
+    }, 5000); // Poll every 5 seconds if there are active transfers
 
+    return () => clearInterval(interval);
+  }, [jobs, toast]);
+
+  // Rest of the component functions remain the same
   const handleDeleteClick = (e, job) => {
     e.stopPropagation();
     setSelectedJob(job);
@@ -196,17 +216,30 @@ const JobsPage = () => {
         description: error.message || "Failed to delete job",
         variant: "destructive",
       });
-      throw error; // Re-throw to handle in the dialog
+      throw error;
+    }
+  };
+
+  const handleHotFolderClick = async (e, job) => {
+    e.stopPropagation();
+    try {
+      await updateJobTrigger(job.jobId);
+      toast({
+        title: "Success",
+        description: "Job trigger updated to HOT FOLDER",
+      });
+      fetchJobs();
+    } catch (error) {
+      console.error('Error updating job trigger:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update job trigger",
+        variant: "destructive",
+      });
     }
   };
 
   const getJobStats = () => {
-    // Add debug logging to see what statuses we have
-    console.log('Jobs for stats calculation:', jobs.map(job => ({
-      jobId: job.jobId,
-      status: job.status,
-    })));
-  
     const total = jobs.length;
     const completed = jobs.filter(job => 
       job.status?.toUpperCase() === 'OK' || 
@@ -229,19 +262,7 @@ const JobsPage = () => {
     ).length;
     const successRate = total > 0 ? Math.round((completed / total) * 100) : 0;
   
-    // Debug log the calculated stats
-    console.log('Calculated stats:', {
-      total,
-      completed,
-      inProgress,
-      failed,
-      ready,
-      paused,
-      successRate
-    });
-  
     return { total, completed, inProgress, failed, ready, paused, successRate };
-  
   };
 
   const toggleRowExpansion = (jobId) => {
@@ -254,6 +275,14 @@ const JobsPage = () => {
     setExpandedRows(newExpandedRows);
   };
 
+  const formatTransferRate = (rateBitsPerSecond) => {
+    if (!rateBitsPerSecond && rateBitsPerSecond !== 0) return 'N/A';
+    
+    const mbps = rateBitsPerSecond / 1024 / 1024;
+    if (mbps < 0.1) return '< 0.1 Mbps';
+    return `${mbps.toFixed(1)} Mbps`;
+  };
+
   const getStatusVariant = (status, alerts = []) => {
     const hasCriticalAlert = alerts.some(alert => 
       ['SOURCE_ENDPOINT_OFFLINE', 'DESTINATION_ENDPOINT_OFFLINE', 'IN_PROGRESS_TRANSFER_HAS_ERRORS']
@@ -264,6 +293,7 @@ const JobsPage = () => {
   
     switch (status?.toUpperCase()) {
       case 'OK':
+      case 'COMPLETED':
         return 'success';
       case 'IN_PROGRESS':
         return 'default';
@@ -281,6 +311,7 @@ const JobsPage = () => {
   const getStatusDisplay = (status) => {
     switch (status?.toUpperCase()) {
       case 'OK':
+      case 'COMPLETED':
         return 'Completed';
       case 'IN_PROGRESS':
         return 'In Progress';
@@ -293,7 +324,6 @@ const JobsPage = () => {
       default:
         return status || 'Ready';
     }
-  
   };
 
   const formatDate = (dateString) => {
@@ -423,121 +453,139 @@ const JobsPage = () => {
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <Table>
-
           <TableHeader>
-  <TableRow className="bg-gray-50 hover:bg-gray-50">
-    <TableHead className="w-8"></TableHead>
-    <TableHead className="font-semibold">NAME</TableHead>
-    <TableHead className="font-semibold">STATUS</TableHead>
-    <TableHead className="font-semibold">TRANSFER RATE</TableHead>
-    <TableHead className="font-semibold">LAST ACTIVITY</TableHead>
-    <TableHead className="font-semibold">ACTIONS</TableHead>
-  </TableRow>
-</TableHeader>
+            <TableRow className="bg-gray-50 hover:bg-gray-50">
+              <TableHead className="w-8"></TableHead>
+              <TableHead className="font-semibold">NAME</TableHead>
+              <TableHead className="font-semibold">STATUS</TableHead>
+              <TableHead className="font-semibold">TRIGGER</TableHead>
+              <TableHead className="font-semibold">TRANSFER RATE</TableHead>
+              <TableHead className="font-semibold">LAST ACTIVITY</TableHead>
+              <TableHead className="font-semibold">ACTIONS</TableHead>
+            </TableRow>
+          </TableHeader>
 
-{/* Table Body */}
-<TableBody>
-  {jobs.map(job => {
-    const isExpanded = expandedRows.has(job.jobId);
-    const destination = job.actions?.[0]?.data?.destination;
+          <TableBody>
+            {jobs.map(job => {
+              const isExpanded = expandedRows.has(job.jobId);
+              const destination = job.actions?.[0]?.data?.destination;
 
-    return (
-      <React.Fragment key={job.jobId}>
-        <TableRow 
-          className={`transition-colors ${
-            isExpanded ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
-          }`}
-        >
-          <TableCell className="w-8 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-            {isExpanded ? 
-              <ChevronDown className="h-4 w-4 text-blue-500" /> : 
-              <ChevronRight className="h-4 w-4 text-gray-400" />
-            }
-          </TableCell>
-          <TableCell className="font-medium cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-            {job.name}
-          </TableCell>
-          <TableCell className="cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-            <Badge variant={getStatusVariant(job.status, job.activeAlerts)}>
-              {getStatusDisplay(job.status)}
-            </Badge>
-          </TableCell>
-          <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-            {job.currentRateBitsPerSecond 
-              ? `${Math.round(job.currentRateBitsPerSecond / 1024 / 1024)} Mbps` 
-              : 'N/A'}
-          </TableCell>
-          <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-            {formatDate(job.lastModifiedOn)}
-          </TableCell>
-          <TableCell>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
-              onClick={(e) => handleDeleteClick(e, job)}
-              disabled={job.status === 'IN_PROGRESS'}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </TableCell>
-        </TableRow>
-        {isExpanded && destination && (
-          <TableRow className="bg-blue-50">
-            <TableCell colSpan={6}>
-              <div className="p-4 bg-gradient-to-r from-blue-50 to-white rounded-lg m-2 shadow-sm">
-                <h3 className="font-semibold text-blue-700 mb-4">Transfer Details</h3>
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-blue-600">Source Details</p>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-700">Name: {job.actions?.[0]?.data?.source?.name || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Created By: {job.actions?.[0]?.data?.source?.createdBy || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Last Modified By: {job.actions?.[0]?.data?.source?.lastModifiedBy || 'N/A'}</p>
+              return (
+                <React.Fragment key={job.jobId}>
+                  <TableRow 
+                    className={`transition-colors ${
+                      isExpanded ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+                    }`}
+                  >
+                    <TableCell className="w-8 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      {isExpanded ? 
+                        <ChevronDown className="h-4 w-4 text-blue-500" /> : 
+                        <ChevronRight className="h-4 w-4 text-gray-400" />
+                      }
+                    </TableCell>
+                    <TableCell className="font-medium cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      {job.name}
+                    </TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      <Badge variant={getStatusVariant(job.status, job.activeAlerts)}>
+                        {getStatusDisplay(job.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      <Badge variant="outline">
+                        {job.triggerType}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      {job.status === 'IN_PROGRESS' ? (
+                        <span className="font-medium text-blue-600">
+                          {formatTransferRate(job.currentRateBitsPerSecond)}
+                        </span>
+                      ) : (
+                        'N/A'
+                      )}
+                    </TableCell>
+                    <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+                      {formatDate(job.lastModifiedOn)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        {job.triggerType !== 'HOT_FOLDER' && (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-100"
+                            onClick={(e) => handleHotFolderClick(e, job)}
+                            disabled={job.status === 'IN_PROGRESS'}
+                          >
+                            <FolderInput className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={(e) => handleDeleteClick(e, job)}
+                          disabled={job.status === 'IN_PROGRESS'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                    </div>
-                  </div>
+                    </TableCell>
+                  </TableRow>
+                  {isExpanded && destination && (
+                    <TableRow className="bg-blue-50">
+                      <TableCell colSpan={7}>
+                        <div className="p-4 bg-gradient-to-r from-blue-50 to-white rounded-lg m-2 shadow-sm">
+                          <h3 className="font-semibold text-blue-700 mb-4">Transfer Details</h3>
+                          <div className="grid grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-sm font-medium text-blue-600">Source Details</p>
+                                <div className="space-y-2">
+                                  <p className="text-sm text-gray-700">Name: {job.actions?.[0]?.data?.source?.name || 'N/A'}</p>
+                               
+                                </div>
+                              </div>
+                            </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <p className="text-sm font-medium text-blue-600">Destination Details</p>
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-700">Name: {destination.name || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Created By: {destination.createdBy || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Last Modified By: {destination.lastModifiedBy || 'N/A'}</p>
-                      </div>
-                    </div>
-                  </div>
+                            <div className="space-y-4">
+                              <div>
+                                <p className="text-sm font-medium text-blue-600">Destination Details</p>
+                                <div className="space-y-2">
+                                  <p className="text-sm text-gray-700">Name: {destination.name || 'N/A'}</p>
+                            
+                               
+                                </div>
+                              </div>
+                            </div>
 
-                  {/* Job Information section with Job ID */}
-                  <div className="col-span-2 mt-4">
-                    <p className="text-sm font-medium text-blue-600">Job Information</p>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div>
-                        <p className="text-sm text-gray-700">Job ID: {job.jobId}</p>
-                        <p className="text-sm text-gray-700">Created By: {job.createdByAuthId || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Created On: {formatDate(job.createdOn)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-700">Last Modified By: {job.lastModifiedByAuthId || 'N/A'}</p>
-                        <p className="text-sm text-gray-700">Last Modified On: {formatDate(job.lastModifiedOn)}</p>
-                      </div>
-                    </div>
-                  </div>
+                            <div className="col-span-2 mt-4">
+                              <p className="text-sm font-medium text-blue-600">Job Information</p>
+                              <div className="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                  <p className="text-sm text-gray-700">Job ID: {job.jobId}</p>
+                                  <p className="text-sm text-gray-700">Created By: {job.createdByAuthId || 'N/A'}</p>
+                                  <p className="text-sm text-gray-700">Created On: {formatDate(job.createdOn)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-700">Last Modified By: {job.lastModifiedByAuthId || 'N/A'}</p>
+                                  <p className="text-sm text-gray-700">Last Modified On: {formatDate(job.lastModifiedOn)}</p>
+                                </div>
+                              </div>
+                            </div>
 
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium text-blue-600">Path</p>
-                    <p className="text-sm text-gray-700 break-all bg-white p-2 rounded border border-blue-100">
-                      {destination.config?.path || 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </TableCell>
-          </TableRow>
-)}
-                  
+                            <div className="col-span-2">
+                              <p className="text-sm font-medium text-blue-600">Path</p>
+                              <p className="text-sm text-gray-700 break-all bg-white p-2 rounded border border-blue-100">
+                                {destination.config?.path || 'N/A'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </React.Fragment>
               );
             })}

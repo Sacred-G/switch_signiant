@@ -84,13 +84,15 @@ const TransferManager = () => {
           .filter(profile => 
             profile.storageProfileId && 
             profile.storageProfileType === 'ON_PREMISE_FILE_STORAGE'
-          );
+          )
+          .sort((a, b) => a.name.localeCompare(b.name)); // Sort sources alphabetically
 
         const destinationProfiles = data.items
           .filter(profile =>
             profile.storageProfileId &&
             profile.storageProfileType === 'AWS_S3'
-          );
+          )
+          .sort((a, b) => a.name.localeCompare(b.name)); // Sort destinations alphabetically
 
         setSources(sourceProfiles);
         setDestinations(destinationProfiles);
@@ -407,9 +409,9 @@ const TransferManager = () => {
           </Card>
         ) : (
           filteredTransfers.map(transfer => (
-            <Card key={transfer.jobId} className="relative"> {/* Add relative positioning */}
-              {transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") && ( // Check for hotfolder trigger
-                <Flame className="absolute top-2 right-2 h-6 w-6 text-red-500" /> // Position the icon
+            <Card key={transfer.jobId} className="relative">
+              {transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") && (
+                <Flame className="absolute top-2 right-2 h-6 w-6 text-red-500" />
               )}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-lg">

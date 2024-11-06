@@ -105,3 +105,78 @@ export const deleteJob = async (jobId, confirmationText) => {
     throw error;
   }
 };
+
+// Function to update job trigger to HOT_FOLDER
+export const updateJobTrigger = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the current job to preserve other settings
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Get the existing trigger or create a new one
+    const existingTrigger = job.triggers?.[0] || {};
+    const source = job.actions?.[0]?.data?.source;
+    
+    // Create the HOT_FOLDER trigger with all required properties
+    const hotFolderTrigger = {
+      ...existingTrigger,
+      type: "HOT_FOLDER",
+      events: [
+        "hotFolder.files.discovered",
+        "hotFolder.files.created",
+        "hotFolder.files.modified",
+        "hotFolder.signature.changed"
+      ],
+      metadata: {
+        ...existingTrigger.metadata,
+        monitorId: existingTrigger.metadata?.monitorId || `${jobId}-monitor`
+      },
+      monitor: {
+        ...existingTrigger.monitor,
+        monitorId: existingTrigger.monitor?.monitorId || `${jobId}-monitor`,
+        accountId: source?.accountId,
+        serviceId: source?.endpoint?.devices?.[0]?.serviceId,
+        deviceId: source?.endpoint?.devices?.[0]?.deviceId,
+        deviceStatus: "OK",
+        initializationStatus: "OK",
+        url: source?.url,
+        status: { state: "OK" }
+      },
+      data: {
+        ...existingTrigger.data,
+        source: source
+      }
+    };
+
+    // Update the job with the new trigger
+    const updatedJob = {
+      ...job,
+      triggers: [hotFolderTrigger]
+    };
+
+    const updateResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(updatedJob)
+    });
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text();
+      throw new Error(`Failed to update job trigger: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating job trigger:', error);
+    throw error;
+  }
+};
