@@ -110,14 +110,9 @@ const JobsPage = () => {
       const jobsWithDetails = await Promise.all(data.items.map(async (job) => {
         let transferRate = null;
         
-        // Get the monitor status from the first trigger if it exists
+        // Get monitor status
         const monitorStatus = job.triggers?.[0]?.monitor?.status?.state;
-        
-        // Get status from various possible locations in the job object
-        const jobStatus = monitorStatus || 
-                         job.triggers?.[0]?.status?.state ||
-                         job.actions?.[0]?.status?.state ||
-                         'READY'; // Default to READY if no status is found
+        const jobStatus = monitorStatus || job.actions?.[0]?.status?.state || 'READY';
   
         if (jobStatus === 'IN_PROGRESS') {
           try {
@@ -134,27 +129,33 @@ const JobsPage = () => {
           }
         }
   
-        console.log(`Job ${job.jobId} processed status:`, { 
-          monitorStatus,
-          jobStatus,
-          finalStatus: jobStatus || 'N/A'
+        // Clean up the job name
+        const jobName = job.name || 'Unnamed Job';
+        // Remove 'Hot Folder - ' prefix and timestamp suffix if present
+        const cleanName = jobName
+          .replace('Hot Folder - ', '')
+          .replace(/\s+-\s+\d{8}_\d{6}$/, ''); // Removes timestamp pattern at the end
+  
+        console.log('Processing job:', {
+          originalName: job.name,
+          cleanName: cleanName,
+          jobId: job.jobId
         });
   
         return {
+          ...job,
           jobId: job.jobId,
-          jobName: job.name || 'Unnamed Job',
-          status: jobStatus || 'N/A',
-          lastModifiedOn: job.lastModifiedOn || job.modifiedOn || 'N/A',
+          name: cleanName,
+          status: jobStatus,
+          lastModifiedOn: job.lastModifiedOn || job.modifiedOn || job.createdOn,
           currentRateBitsPerSecond: transferRate,
           activeAlerts: job.activeAlerts || [],
-          actions: job.actions || []
+          actions: job.actions || [],
+          createdByAuthId: job.createdByAuthId,
+          lastModifiedByAuthId: job.lastModifiedByAuthId,
+          createdOn: job.createdOn
         };
       }));
-  
-      console.log('Transformed jobs with status:', jobsWithDetails.map(j => ({
-        jobId: j.jobId,
-        status: j.status
-      })));
   
       setJobs(jobsWithDetails);
     } catch (error) {
@@ -400,14 +401,6 @@ const JobsPage = () => {
           textColor="text-yellow-700"
         />
         <StatCard
-          title="Ready"
-          value={stats.ready}
-          subtitle="Awaiting trigger"
-          icon={PauseCircle}
-          bgColor="bg-gray-100"
-          textColor="text-gray-600"
-        />
-        <StatCard
           title="Failed"
           value={stats.failed}
           subtitle="Require attention"
@@ -430,111 +423,121 @@ const JobsPage = () => {
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50 hover:bg-gray-50">
-              <TableHead className="w-8"></TableHead>
-              <TableHead className="font-semibold">JOB NAME</TableHead>
-              <TableHead className="font-semibold">JOB ID</TableHead>
-              <TableHead className="font-semibold">STATUS</TableHead>
-              <TableHead className="font-semibold">TRANSFER RATE</TableHead>
-              <TableHead className="font-semibold">LAST ACTIVITY</TableHead>
-              <TableHead className="font-semibold">ACTIONS</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-          {jobs.map(job => {
-  const isExpanded = expandedRows.has(job.jobId);
-  const destination = job.actions?.[0]?.data?.destination;
-  
-  // Debug log for each job's status
-  console.log(`Rendering job ${job.jobId}:`, {
-    status: job.status,
-    displayStatus: getStatusDisplay(job.status),
-    variant: getStatusVariant(job.status, job.activeAlerts)
-  });
 
-  return (
-    <React.Fragment key={job.jobId}>
-      <TableRow 
-        className={`transition-colors ${
-          isExpanded ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
-        }`}
-      >
-        <TableCell className="w-8 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          {isExpanded ? 
-            <ChevronDown className="h-4 w-4 text-blue-500" /> : 
-            <ChevronRight className="h-4 w-4 text-gray-400" />
-          }
-        </TableCell>
-        <TableCell className="font-medium cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          {job.jobName || 'Unnamed Job'}
-        </TableCell>
-        <TableCell className="font-mono text-sm text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          {job.jobId}
-        </TableCell>
-        <TableCell className="cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          <Badge variant={getStatusVariant(job.status, job.activeAlerts)}>
-            {getStatusDisplay(job.status)}
-          </Badge>
-        </TableCell>
-        <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          {job.currentRateBitsPerSecond 
-            ? `${Math.round(job.currentRateBitsPerSecond / 1024 / 1024)} Mbps` 
-            : 'N/A'}
-        </TableCell>
-        <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-          {formatDate(job.lastModifiedOn)}
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
-            onClick={(e) => handleDeleteClick(e, job)}
-            disabled={job.status?.toUpperCase() === 'IN_PROGRESS'}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </TableCell>
-     
-                  </TableRow>
-                  {isExpanded && destination && (
-                    <TableRow className="bg-blue-50">
-                      <TableCell colSpan={7}>
-                        <div className="p-4 bg-gradient-to-r from-blue-50 to-white rounded-lg m-2 shadow-sm">
-                          <h3 className="font-semibold text-blue-700 mb-4">Destination Details</h3>
-                          <div className="grid grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <div>
-                                <p className="text-sm font-medium text-blue-600">Name</p>
-                                <p className="text-sm text-gray-700">{destination.name}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-blue-600">Bucket</p>
-                                <p className="text-sm text-gray-700">{destination.config?.bucket}</p>
-                              </div>
-                            </div>
-                            <div className="space-y-2">
-                              <div>
-                                <p className="text-sm font-medium text-blue-600">Region</p>
-                                <p className="text-sm text-gray-700">{destination.config?.region}</p>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-blue-600">Storage Profile Type</p>
-                                <p className="text-sm text-gray-700">{destination.storageProfileType}</p>
-                              </div>
-                            </div>
-                            <div className="col-span-2">
-                              <p className="text-sm font-medium text-blue-600">Path</p>
-                              <p className="text-sm text-gray-700 break-all bg-white p-2 rounded border border-blue-100">
-                                {destination.config?.path}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
+          <TableHeader>
+  <TableRow className="bg-gray-50 hover:bg-gray-50">
+    <TableHead className="w-8"></TableHead>
+    <TableHead className="font-semibold">NAME</TableHead>
+    <TableHead className="font-semibold">STATUS</TableHead>
+    <TableHead className="font-semibold">TRANSFER RATE</TableHead>
+    <TableHead className="font-semibold">LAST ACTIVITY</TableHead>
+    <TableHead className="font-semibold">ACTIONS</TableHead>
+  </TableRow>
+</TableHeader>
+
+{/* Table Body */}
+<TableBody>
+  {jobs.map(job => {
+    const isExpanded = expandedRows.has(job.jobId);
+    const destination = job.actions?.[0]?.data?.destination;
+
+    return (
+      <React.Fragment key={job.jobId}>
+        <TableRow 
+          className={`transition-colors ${
+            isExpanded ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+          }`}
+        >
+          <TableCell className="w-8 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+            {isExpanded ? 
+              <ChevronDown className="h-4 w-4 text-blue-500" /> : 
+              <ChevronRight className="h-4 w-4 text-gray-400" />
+            }
+          </TableCell>
+          <TableCell className="font-medium cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+            {job.name}
+          </TableCell>
+          <TableCell className="cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+            <Badge variant={getStatusVariant(job.status, job.activeAlerts)}>
+              {getStatusDisplay(job.status)}
+            </Badge>
+          </TableCell>
+          <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+            {job.currentRateBitsPerSecond 
+              ? `${Math.round(job.currentRateBitsPerSecond / 1024 / 1024)} Mbps` 
+              : 'N/A'}
+          </TableCell>
+          <TableCell className="text-gray-600 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
+            {formatDate(job.lastModifiedOn)}
+          </TableCell>
+          <TableCell>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-100"
+              onClick={(e) => handleDeleteClick(e, job)}
+              disabled={job.status === 'IN_PROGRESS'}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </TableCell>
+        </TableRow>
+        {isExpanded && destination && (
+          <TableRow className="bg-blue-50">
+            <TableCell colSpan={6}>
+              <div className="p-4 bg-gradient-to-r from-blue-50 to-white rounded-lg m-2 shadow-sm">
+                <h3 className="font-semibold text-blue-700 mb-4">Transfer Details</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Source Details</p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-700">Name: {job.actions?.[0]?.data?.source?.name || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Created By: {job.actions?.[0]?.data?.source?.createdBy || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Last Modified By: {job.actions?.[0]?.data?.source?.lastModifiedBy || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-blue-600">Destination Details</p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-700">Name: {destination.name || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Created By: {destination.createdBy || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Last Modified By: {destination.lastModifiedBy || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Job Information section with Job ID */}
+                  <div className="col-span-2 mt-4">
+                    <p className="text-sm font-medium text-blue-600">Job Information</p>
+                    <div className="grid grid-cols-2 gap-4 mt-2">
+                      <div>
+                        <p className="text-sm text-gray-700">Job ID: {job.jobId}</p>
+                        <p className="text-sm text-gray-700">Created By: {job.createdByAuthId || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Created On: {formatDate(job.createdOn)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-700">Last Modified By: {job.lastModifiedByAuthId || 'N/A'}</p>
+                        <p className="text-sm text-gray-700">Last Modified On: {formatDate(job.lastModifiedOn)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-blue-600">Path</p>
+                    <p className="text-sm text-gray-700 break-all bg-white p-2 rounded border border-blue-100">
+                      {destination.config?.path || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </TableCell>
+          </TableRow>
+)}
+                  
                 </React.Fragment>
               );
             })}
