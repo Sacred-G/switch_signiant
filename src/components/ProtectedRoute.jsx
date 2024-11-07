@@ -3,6 +3,8 @@ import { Navigate } from 'react-router-dom';
 import { SigniantAuth } from '../services/auth';
 import { Loader2 } from 'lucide-react';
 
+
+
 const ProtectedRoute = ({ children }) => {
   const [authState, setAuthState] = useState({
     isAuthenticated: null,

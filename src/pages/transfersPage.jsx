@@ -15,7 +15,6 @@ import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
 
-
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   
@@ -203,15 +202,15 @@ const TransferManager = () => {
                 type: "GLOB"
               }
             }
-          },
-          triggers: [{
-            type: "HOT_FOLDER",
-            data: {
-              source: {
-                storageProfileId: selectedSource
-              }
+          }
+        }],
+        triggers: [{
+          type: "MANUAL",
+          data: {
+            source: {
+              storageProfileId: selectedSource
             }
-          }]
+          }
         }]
       };
 
@@ -259,7 +258,6 @@ const TransferManager = () => {
       const matchesStatus = statusFilter === "all" || transfer.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
-  // ... (keep all the state and functions unchanged until the return statement)
 
   return (
     <div className="p-6 space-y-6">
@@ -273,13 +271,13 @@ const TransferManager = () => {
 
       <Card className="mb-6 dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
-          <CardTitle className="dark:text-white">Create Transfer Job</CardTitle>
+          <CardTitle className="dark:text-white">Create New Transfer Job</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-200">
-                Source Profile (On-Premise)
+                Source Profile (Select Ingest)
               </label>
               <Select
                 value={selectedSource}
@@ -307,7 +305,7 @@ const TransferManager = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-200">
-                Destination Profile (AWS S3)
+                Destination Profile (Select AWS S3 Folder)
               </label>
               <Select
                 value={selectedDestination}

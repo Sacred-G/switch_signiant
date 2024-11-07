@@ -1,49 +1,43 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import JobsPage from './pages/JobsPage';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { ThemeProvider } from './components/ThemeProvider';
+import { Toaster } from './components/ui/toaster';
+import DashboardLayout from './components/layout/DashboardLayout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import TransferManager from './pages/transfersPage';
-import ProtectedRoute from './components/ProtectedRoute';
-import { Toaster } from "./components/ui/toaster";
-import DashboardLayout from './components/layout/DashboardLayout';
-import { ThemeProvider } from './components/ThemeProvider';
+import JobsPage from './pages/JobsPage';
+import TransfersPage from './pages/transfersPage';
+import FileMonitor from './pages/FileMonitor';
+import AnalyticsPage from './pages/AnalyticsPage';
 
-function App() {
+const DashboardContainer = () => {
   return (
-    <ThemeProvider>
+    <DashboardLayout>
+      <Outlet />
+    </DashboardLayout>
+  );
+};
+
+const App = () => {
+  return (
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Router>
-        <div>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <TransferManager />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/jobs"
-              element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <JobsPage />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              }
-            />
-            {/* Redirect any unknown routes to transfers page */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Toaster />
-        </div>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/" element={<ProtectedRoute><DashboardContainer /></ProtectedRoute>}>
+            <Route index element={<Navigate to="/transfers" replace />} />
+            <Route path="jobs" element={<JobsPage />} />
+            <Route path="transfers" element={<TransfersPage />} />
+            <Route path="monitor" element={<FileMonitor />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+          </Route>
+        </Routes>
       </Router>
+      <Toaster />
     </ThemeProvider>
   );
-}
+};
 
 export default App;

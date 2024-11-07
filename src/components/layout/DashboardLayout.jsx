@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
 import { List, Home, Repeat, LogOut, Sun, Moon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { SigniantAuth } from '../../services/auth';
+import { SigniantApiAuth } from '../../lib/signiant';
 import { useTheme } from '../ThemeProvider';
+import { BarChart } from 'lucide-react';
 
 const SidebarItem = ({ icon, text, to, onClick }) => {
   const location = useLocation();
@@ -49,7 +50,7 @@ const DashboardLayout = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await SigniantAuth.logout();
+      await SigniantApiAuth.logout();
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);
@@ -76,8 +77,9 @@ const DashboardLayout = ({ children }) => {
         </div>
         <nav className="mt-6 flex flex-col justify-between h-[calc(100vh-100px)]">
           <div>
-            <SidebarItem to="/" icon={<Repeat size={20} />} text="Transfers" />
-            <SidebarItem to="/jobs" icon={<List size={20} />} text="Jobs" />
+            <SidebarItem to="/transfers" icon={<Repeat size={20} />} text="Create New Transfers" />
+    
+            <SidebarItem to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
           </div>
           <div className="mb-6">
             <SidebarItem 

@@ -1,4 +1,3 @@
-{/* Previous imports remain the same */}
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
@@ -27,9 +26,9 @@ import {
 } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
-import { deleteJob, updateJobTrigger } from '../lib/signiant';
+import { deleteJob, updateJobTrigger, getTransferDetails } from '../lib/signiant';
+import { TransferProgress } from '../components/transferProgress';
 
-{/* DeleteConfirmationDialog component remains the same */}
 const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, jobName }) => {
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -111,38 +110,22 @@ const JobsPage = () => {
   
       const data = await response.json();
       const jobsWithDetails = await Promise.all(data.items.map(async (job) => {
-        let transferRate = null;
-        
         // Get monitor status and action status
         const monitorStatus = job.triggers?.[0]?.monitor?.status?.state;
         const actionStatus = job.actions?.[0]?.status?.state;
         
         // Prioritize IN_PROGRESS status
         let jobStatus = 'READY';
-        if (monitorStatus === 'IN_PROGRESS' || actionStatus === 'IN_PROGRESS') {
-          jobStatus = 'IN_PROGRESS';
-        } else if (monitorStatus) {
+        if (monitorStatus) {
           jobStatus = monitorStatus;
         } else if (actionStatus) {
           jobStatus = actionStatus;
         }
-  
-        // Always fetch transfer rate for active jobs
-        if (jobStatus === 'COMPLETED' || jobStatus === 'READY') {
-          try {
-            const transferResponse = await fetch(
-              `${import.meta.env.VITE_SIGNIANT_API_URL}/v1/transfers/${job.jobId}`,
-              { headers }
-            );
-            if (transferResponse.ok) {
-              const transferData = await transferResponse.json();
-              if (transferData.items && transferData.items.length > 0) {
-                transferRate = transferData.items[0]?.currentRateBitsPerSecond || 0;
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching transfer details:', error);
-          }
+
+        let transferDetails = null;
+        // Only fetch transfer details if the job is in progress
+        if (jobStatus === 'IN_PROGRESS') {
+          transferDetails = await getTransferDetails(job.jobId);
         }
   
         // Clean up the job name
@@ -157,7 +140,7 @@ const JobsPage = () => {
           name: cleanName,
           status: jobStatus,
           lastModifiedOn: job.lastModifiedOn || job.modifiedOn || job.createdOn,
-          currentRateBitsPerSecond: transferRate,
+          transferDetails,
           activeAlerts: job.activeAlerts || [],
           actions: job.actions || [],
           createdByAuthId: job.createdByAuthId,
@@ -181,7 +164,6 @@ const JobsPage = () => {
     }
   };
 
-  // Add polling for active transfers
   useEffect(() => {
     fetchJobs();
     const interval = setInterval(() => {
@@ -189,12 +171,11 @@ const JobsPage = () => {
       if (hasActiveTransfers) {
         fetchJobs();
       }
-    }, 5000); // Poll every 5 seconds if there are active transfers
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [jobs, toast]);
+  }, [jobs]);
 
-  // Rest of the component functions remain the same
   const handleDeleteClick = (e, job) => {
     e.stopPropagation();
     setSelectedJob(job);
@@ -273,14 +254,6 @@ const JobsPage = () => {
       newExpandedRows.add(jobId);
     }
     setExpandedRows(newExpandedRows);
-  };
-
-  const formatTransferRate = (rateBitsPerSecond) => {
-    if (!rateBitsPerSecond && rateBitsPerSecond !== 0) return 'N/A';
-    
-    const mbps = rateBitsPerSecond / 1024 / 1024;
-    if (mbps < 0.1) return '< 0.1 Mbps';
-    return `${mbps.toFixed(1)} Mbps`;
   };
 
   const getStatusVariant = (status, alerts = []) => {
@@ -453,7 +426,7 @@ const JobsPage = () => {
               <TableHead className="font-semibold dark:text-gray-300">NAME</TableHead>
               <TableHead className="font-semibold dark:text-gray-300">STATUS</TableHead>
               <TableHead className="font-semibold dark:text-gray-300">FOLDER TYPE</TableHead>
-              <TableHead className="font-semibold dark:text-gray-300">TRANSFER RATE</TableHead>
+              <TableHead className="font-semibold dark:text-gray-300">TRANSFER PROGRESS</TableHead>
               <TableHead className="font-semibold dark:text-gray-300">LAST ACTIVITY</TableHead>
               <TableHead className="font-semibold dark:text-gray-300">ACTIONS</TableHead>
             </TableRow>
@@ -492,13 +465,17 @@ const JobsPage = () => {
                         {job.triggerType}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-gray-600 dark:text-gray-300 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>
-                      {job.status === 'IN_PROGRESS' ? (
-                        <span className="font-medium text-blue-600 dark:text-blue-400">
-                          {formatTransferRate(job.currentRateBitsPerSecond)}
-                        </span>
-                      ) : (
-                        'N/A'
+                    <TableCell className="w-1/3">
+                      {job.status === 'IN_PROGRESS' && job.transferDetails && (
+                        <TransferProgress
+                          transferProgress={{
+                            percentComplete: job.transferDetails.percentComplete,
+                            filesRemaining: job.transferDetails.filesRemaining,
+                            bytesTransferred: job.transferDetails.bytesTransferred
+                          }}
+                          transferStartedOn={job.transferDetails.startTime}
+                          currentRateBitsPerSecond={job.transferDetails.currentRateBitsPerSecond}
+                        />
                       )}
                     </TableCell>
                     <TableCell className="text-gray-600 dark:text-gray-300 cursor-pointer" onClick={() => toggleRowExpansion(job.jobId)}>

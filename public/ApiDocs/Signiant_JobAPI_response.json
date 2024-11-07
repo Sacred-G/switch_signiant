@@ -1,707 +1,358 @@
+
+
+PATCH
+/v1/jobs/{jobId}
+Change job status
+
+Change a job status. The supported update operations are:
+
+    Pause/Resume
+    Stop (Manual job)
+    Schedule configuration
+    Growing file transfer options
+
+Parameters
+Name	Description
+jobId *
+string
+(path)
+	
+
+The ID of the job to update.
+Request body
+Examples:
+
+{
+  "paused": true
+}
+
+Responses
+Code	Description	Links
+200	
+
+The job has been updated
+Media type
+Controls Accept header.
+
+{
+  "jobId": "string",
+  "name": "string",
+  "actions": [
+    {
+      "actionId": "1234abc-1234-4321-ae9d-0045ceec5021",
+      "createdOn": "2020-06-06T21:30:28.347Z",
+      "data": {
+        "destination": {
+          "accountId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "createdBy": "user@example.com",
+          "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "createdOn": "2024-11-07T00:37:44.656Z",
+          "endpointId": "4321-cba-1234-4321-ae9d-0045ceec5021",
+          "lastModifiedBy": "user@example.com",
+          "lastModifiedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+          "name": "Example Storage Profile",
+          "serviceId": "string",
+          "storageProfileId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "type": "PRIVATE",
+          "url": "file:///path/to/folder"
+        },
+        "source": {
+          "accountId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "createdBy": "user@example.com",
+          "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "createdOn": "2024-11-07T00:37:44.656Z",
+          "endpointId": "4321-cba-1234-4321-ae9d-0045ceec5021",
+          "lastModifiedBy": "user@example.com",
+          "lastModifiedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+          "name": "Example Storage Profile",
+          "serviceId": "string",
+          "storageProfileId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "type": "PRIVATE",
+          "url": "file:///path/to/folder"
+        },
+        "bandwidthManagement": {
+          "enabled": true,
+          "maxRate": {
+            "value": 100,
+            "unit": "Mbps"
+          },
+          "scheduling": {
+            "enabled": true,
+            "items": [
+              {
+                "rrule": "DTSTART;TZID=America/Toronto:20211001T090000\\nDTEND;TZID=America/Toronto:20211001T170000\\nRRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+              }
+            ]
+          }
+        },
+        "transferOptions": {
+          "areGrowingObjects": false,
+          "growingObjects": {
+            "growingIdleTimeoutInSeconds": 5
+          },
+          "partSizeInMiB": 16,
+          "objectPatterns": {
+            "inclusions": [
+              "**/*.png"
+            ],
+            "exclusions": [
+              "**/example.jpg"
+            ],
+            "type": "GLOB"
+          }
+        }
+      },
+      "jobId": "01fedcba-abcd-1234-4331-d72182c496c3",
+      "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+      "nextActionIds": "[]",
+      "type": "TRANSFER"
+    }
+  ],
+  "triggers": [
+    {
+      "actions": [
+        "1234abc-1234-4321-ae9d-0045ceec5021"
+      ],
+      "createdOn": "2020-06-08T21:30:28.347Z",
+      "data": {
+        "source": {
+          "accountId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "createdBy": "user@example.com",
+          "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "createdOn": "2024-11-07T00:37:44.656Z",
+          "endpointId": "4321-cba-1234-4321-ae9d-0045ceec5021",
+          "lastModifiedBy": "user@example.com",
+          "lastModifiedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+          "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+          "name": "Example Storage Profile",
+          "serviceId": "string",
+          "storageProfileId": "1234abc-1234-4321-ae9d-0045ceec5021",
+          "type": "PRIVATE",
+          "url": "file:///path/to/folder"
+        }
+      },
+      "events": [
+        "hotFolder.files.discovered",
+        "hotFolder.files.created",
+        "hotFolder.files.modified",
+        "hotFolder.signature.changed"
+      ],
+      "jobId": "1234abc-1234-4321-ae9d-0045ceec5021",
+      "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+      "metadata": {
+        "monitorid": "1234abc-1234-4321-ae9d-0045ceec5021"
+      },
+      "triggerId": "1234abc-1234-4321-ae9d-0045ceec5021",
+      "type": "HOT_FOLDER"
+    }
+  ],
+  "lastModifiedOn": "2024-11-07T00:37:44.656Z",
+  "accountId": "string",
+  "createdOn": "2024-11-07T00:37:44.656Z",
+  "serviceId": "string",
+  "paused": true
+}
+
+
+
+
+
+GET
+/v1/jobs/{jobId}/transfers
+List a job's transfers
+
+Retrieve a list of in progress transfers associated with a job.
+Parameters
+Name	Description
+jobId *
+string($uuid)
+(path)
+	
+
+The job ID to retrieve transfers for.
+state *
+string
+(query)
+	
+
+The job transfer status.
+
+Available values : IN_PROGRESS
+Responses
+Code	Description	Links
+200	
+
+The job's in progress transfer.
+Media type
+Controls Accept header.
+
 {
   "items": [
     {
-      "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-      "metadata": { "routeId": "aafcf389-f6b4-492e-8a81-3e5a934f922f" },
-      "triggers": [
-        {
-          "metadata": { "monitorId": "5f8da975-3859-4e41-a62b-3593612854fd" },
-          "lastModifiedOn": "2024-11-01T04:39:08.319Z",
-          "events": [
-            "hotFolder.files.discovered",
-            "hotFolder.files.created",
-            "hotFolder.files.modified",
-            "hotFolder.signature.changed"
-          ],
-          "createdOn": "2024-11-01T04:39:08.319Z",
-          "data": {
-            "source": {
-              "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-              "endpointId": "6e442695-89cf-495d-a7ed-3a1037d3d499",
-              "url": "file:///%5C%5CPebble_Ingest5-MEDIA%5Cm$%5Cmedia",
-              "createdBy": "tyler.ries@theswitch.tv",
-              "name": "INGEST5",
-              "lastModifiedOn": "2024-10-31T20:43:17.683Z",
-              "createdOn": "2024-10-31T20:43:17.683Z",
-              "storageProfileId": "adcecbf5-0092-49e3-9d68-9890cff17f28",
-              "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-              "lastModifiedBy": "tyler.ries@theswitch.tv",
-              "storageProfileType": "ON_PREMISE_FILE_STORAGE",
-              "type": "INTERNAL",
-              "endpoint": {
-                "config": { "connectionSupport": { "inbound": true } },
-                "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-                "devices": [
-                  {
-                    "deviceId": "f7698e40-9d7f-4976-b38e-3c47d3b281c0",
-                    "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-                    "serviceId": "c1bf2a69-ca1b-4d70-b92a-1a83b8d3a5eb",
-                    "name": "MediaShuttle Generated. Tenant ID [ 6c6e6c7d3cd2fe8ad81a24d51e10a7c4d2847be3 ]",
-                    "type": "MEDIASHUTTLE_STORAGE_SERVER",
-                    "activated": true,
-                    "keys": [
-                      {
-                        "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo+ELqcegI/eq/7ocTwjK\nN4ikD3PVsoG6tLxU3MYr+Eu374HVGI+EEI8mJjjSVXsN519z0Qy2ALkCglbO1tBz\nAYIncAoSZsesiMIdXVOBMARWnt2KVH685NZhgHYJ8QouyaGHzrL6OzOa6Ipp3hZO\nySvLcrmzhsGDvauez3XMennkHhh70Kit2vVDgObpkNfxFETbONXO1WpkluUaC8ZW\n4gi/miDxFj933xFi8RqJV0xl7OK393AhphmoxGos9j/NgIRrMRxmvtYlXpcg11UE\n2bkUlBlsvAmLhlniGq0mveiBV92ni09szzdZdr2bCR1l68feRbYpdCsYG3WWuZmk\nVwIDAQAB\n-----END PUBLIC KEY-----",
-                        "id": "4434d9b1-530c-4a00-8ebf-06feb5635c02",
-                        "generatedOn": "2024-08-20T16:57:01.214Z",
-                        "registeredOn": "2024-08-20T16:57:01.268Z"
-                      }
-                    ],
-                    "iotConnected": true,
-                    "createdOn": "2024-08-20T16:56:47.963Z",
-                    "lastModifiedOn": "2024-11-03T19:59:22.132Z",
-                    "activatedOn": "2024-08-20T16:57:01.268Z",
-                    "lastConnectedOn": "2024-11-03T19:59:08.892Z",
-                    "lastDisconnectedOn": "2024-11-03T19:59:07.423Z",
-                    "hardwareId": "4c4c4544-0036-4310-8048-b3c04f525933",
-                    "deviceVersions": {
-                      "signiantCommunicationService": "1.28.0",
-                      "MEDIASHUTTLE_STORAGE_SERVER": "6.3.1"
-                    },
-                    "metadata": {
-                      "systemInformation": {
-                        "distro": "Microsoft Windows Server 2022 Standard",
-                        "latencyToKnownEndpointMS": 65,
-                        "fqdn": "SIGNIANT-1",
-                        "release": "10.0.20348",
-                        "fileSystemSizeBytes": [
-                          {
-                            "size": 64424505344,
-                            "rw": true,
-                            "use": 66.53,
-                            "available": 21562695680,
-                            "used": 42861809664,
-                            "type": "NTFS",
-                            "fs": "C:",
-                            "mount": "C:"
-                          },
-                          {
-                            "size": 411568173056,
-                            "rw": true,
-                            "use": 56.37,
-                            "available": 179565780992,
-                            "used": 232002392064,
-                            "type": "NTFS",
-                            "fs": "D:",
-                            "mount": "D:"
-                          }
-                        ],
-                        "cpu": {
-                          "brand": "Xeon® E-2336",
-                          "cores": 12,
-                          "manufacturer": "Intel"
-                        },
-                        "uuid": "4c4c4544-0036-4310-8048-b3c04f525933",
-                        "platform": "Windows",
-                        "manufacturer": "Dell Inc.",
-                        "memoryBytes": {
-                          "dirty": null,
-                          "swapused": 69206016,
-                          "buffers": 0,
-                          "available": 29178286080,
-                          "active": 5020721152,
-                          "buffcache": 0,
-                          "swaptotal": 5100273664,
-                          "used": 5020721152,
-                          "slab": 0,
-                          "total": 34198908928,
-                          "swapfree": 5031067648,
-                          "writeback": null,
-                          "cached": 0,
-                          "free": 29178101760
-                        },
-                        "hostname": "SIGNIANT-1",
-                        "networkInterfaces": [
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "10.175.66.104",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fe80::3a17:9498:c168:c451",
-                            "mac": "14:23:f2:ad:34:a1",
-                            "speed": 10000,
-                            "mtu": null,
-                            "iface": "10G Internet",
-                            "default": true,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter #3",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.254.0"
-                          },
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "10.175.237.201",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fe80::a0d6:1af5:f958:c3a4",
-                            "mac": "14:23:f2:ac:f0:61",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "NAS 10G-3",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.255.0"
-                          },
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "169.254.1.2",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fde1:53ba:e9a0:de11:c8a1:7aac:4402:df50",
-                            "mac": "c4:5a:b1:ad:31:ba",
-                            "speed": 425.984,
-                            "mtu": null,
-                            "iface": "Ethernet",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Remote NDIS Compatible Device",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.255.0"
-                          },
-                          {
-                            "internal": true,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "127.0.0.1",
-                            "type": null,
-                            "ip6subnet": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-                            "carrierChanges": 0,
-                            "ip6": "::1",
-                            "mac": "00:00:00:00:00:00",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "Loopback Pseudo-Interface 1",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Loopback Pseudo-Interface 1",
-                            "operstate": "down",
-                            "dhcp": false,
-                            "ip4subnet": "255.0.0.0"
-                          },
-                          {
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": null,
-                            "type": "wired",
-                            "ip6subnet": null,
-                            "carrierChanges": 0,
-                            "ip6": null,
-                            "mac": null,
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "Internet",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme Gigabit Ethernet",
-                            "operstate": "down",
-                            "dhcp": true,
-                            "ip4subnet": null
-                          },
-                          {
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": null,
-                            "type": "wired",
-                            "ip6subnet": null,
-                            "carrierChanges": 0,
-                            "ip6": null,
-                            "mac": "14:23:f2:ad:34:a0",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "NAS 10G-1",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter",
-                            "operstate": "up",
-                            "dhcp": false,
-                            "ip4subnet": null
-                          }
-                        ],
-                        "model": "PowerEdge R350",
-                        "hostnameForLatencyTesting": "a2xy0445m8zinb.iot.us-east-1.amazonaws.com",
-                        "architecture": "x64"
-                      }
-                    },
-                    "location": {
-                      "continent": { "name": "North America", "code": "NA" },
-                      "country": { "name": "United States", "code": "US" },
-                      "city": { "name": "Los Angeles" },
-                      "resolutionDate": "2024-08-20T16:57:11.585Z",
-                      "postalCode": "90024",
-                      "coordinates": {
-                        "accuracyRadiusInKm": 1000,
-                        "latitude": 34.0648,
-                        "longitude": -118.4414
-                      },
-                      "timeZone": { "name": "America/Los_Angeles" },
-                      "region": { "name": "California", "code": "CA" },
-                      "resolutionMethod": "IP_GEOLOCATION",
-                      "network": {
-                        "ipAddress": "76.83.23.2",
-                        "autonomousSystemNumber": 20001,
-                        "organization": "TWC-20001-PACWEST",
-                        "isp": "Spectrum Business"
-                      }
-                    },
-                    "connection": {
-                      "publicIp": "76.83.23.2",
-                      "publicIpFormat": "V4"
-                    }
-                  }
-                ],
-                "endpointId": "6e442695-89cf-495d-a7ed-3a1037d3d499",
-                "createdBy": "john@jfc-it.com",
-                "name": "Signiant-1",
-                "lastModifiedOn": "2024-10-31T20:20:00.380Z",
-                "createdOn": "2024-10-31T20:20:00.380Z",
-                "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-                "lastModifiedBy": "john@jfc-it.com",
-                "endpointType": "SIGNIANT_DEVICES",
-                "accountName": "The Switch Enterprises",
-                "location": {
-                  "continent": { "name": "North America", "code": "NA" },
-                  "country": { "name": "United States", "code": "US" },
-                  "city": { "name": "Los Angeles" },
-                  "resolutionDate": "2024-08-20T16:57:11.585Z",
-                  "postalCode": "90024",
-                  "coordinates": {
-                    "accuracyRadiusInKm": 1000,
-                    "latitude": 34.0648,
-                    "longitude": -118.4414
-                  },
-                  "timeZone": { "name": "America/Los_Angeles" },
-                  "region": { "name": "California", "code": "CA" },
-                  "resolutionMethod": "IP_GEOLOCATION",
-                  "network": {
-                    "ipAddress": "76.83.23.2",
-                    "autonomousSystemNumber": 20001,
-                    "organization": "TWC-20001-PACWEST",
-                    "isp": "Spectrum Business"
-                  }
-                },
-                "status": {
-                  "state": "OK",
-                  "components": { "devices": { "state": "OK" } }
-                }
-              }
-            }
-          },
-          "sigUpdateRegion": "us-east-1",
-          "jobId": "00e96bac-a38d-4022-97e5-60689801e16e",
-          "triggerId": "c2a6ea91-2128-4066-a122-65a3bee8c8ed",
-          "actions": ["e299dcf2-6d2e-4762-9324-05a781cdf3d3"],
-          "traceId": "6d68a7de-70da-43b3-9508-e562791026a6",
-          "type": "HOT_FOLDER",
-          "monitor": {
-            "monitorId": "5f8da975-3859-4e41-a62b-3593612854fd",
-            "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-            "serviceId": "c1bf2a69-ca1b-4d70-b92a-1a83b8d3a5eb",
-            "deviceId": "f7698e40-9d7f-4976-b38e-3c47d3b281c0",
-            "deviceStatus": "OK",
-            "lastDeviceEventReceivedOn": "2024-11-04T16:43:27.525Z",
-            "initializationStatus": "OK",
-            "lastInitializationEventTime": "2024-11-01T04:39:09.376Z",
-            "url": "file:///%5C%5CPebble_Ingest5-MEDIA%5Cm$%5Cmedia",
-            "createdOn": "2024-11-01T04:39:08.064Z",
-            "lastModifiedOn": "2024-11-04T16:43:27.525Z",
-            "status": { "state": "OK" }
-          }
+      "transferId": "33ac2ace-aaaa-bbbb-86ec-c0fb3b8d74f2",
+      "state": "IN_PROGRESS",
+      "source": {
+        "accountId": "11111111-1234-abcd-4321-12345678e088",
+        "createdBy": "user@example.com",
+        "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "createdOn": "2024-11-06T23:02:29.355Z",
+        "deleted": true,
+        "deletedBy": "user@example.com",
+        "deletedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "endpointId": "11111111-abcd-1234-abcd-123abcdef123",
+        "lastModifiedBy": "user@example.com",
+        "lastModifiedAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "lastModifiedOn": "2024-11-06T23:02:29.355Z",
+        "name": "Example Endpoint",
+        "serviceId": "11111111-1234-abcd-4321-12345678e088",
+        "storageProfileId": "11111111-12345-abccd-12345",
+        "traceId": "11111111-12345-abccd-12345",
+        "type": "PRIVATE",
+        "url": "file:///path/to/folder"
+      },
+      "destination": {
+        "accountId": "11111111-1234-abcd-4321-12345678e088",
+        "createdBy": "user@example.com",
+        "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "createdOn": "2024-11-06T23:02:29.356Z",
+        "deleted": true,
+        "deletedBy": "user@example.com",
+        "deletedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "endpointId": "11111111-abcd-1234-abcd-123abcdef123",
+        "lastModifiedBy": "user@example.com",
+        "lastModifiedAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "lastModifiedOn": "2024-11-06T23:02:29.356Z",
+        "name": "Example Endpoint",
+        "serviceId": "11111111-1234-abcd-4321-12345678e088",
+        "storageProfileId": "11111111-12345-abccd-12345",
+        "traceId": "11111111-12345-abccd-12345",
+        "type": "PRIVATE",
+        "url": "file:///path/to/folder"
+      },
+      "objectsManifest": {
+        "manifestId": "a2853cef-31a0-4879-89e3-fa72126a780d",
+        "summary": {
+          "bytes": 10,
+          "count": 2
         }
-      ],
-      "sigUpdateRegion": "us-east-1",
-      "jobId": "00e96bac-a38d-4022-97e5-60689801e16e",
-      "name": "Ingest5NBC_EC_TNF_2024**/TNF_103124_NBCMAIN_DECO_SDR.mxf",
-      "lastModifiedOn": "2024-11-01T04:39:08.351Z",
-      "createdOn": "2024-11-01T04:39:08.351Z",
-      "crossAccount": false,
-      "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-      "actions": [
-        {
-          "data": {
-            "destination": {
-              "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-              "config": {
-                "bucket": "seattlesims-signiant-mediashuttle-s3bucketstorage",
-                "region": "us-west-2",
-                "path": "/Switch/2024_Event_Recordings_Uploads/TNF_2024/NBC_EC_TNF_2024"
-              },
-              "endpointId": "29b3d718-6003-4189-8502-b419df59db5f",
-              "url": "https://seattlesims-signiant-mediashuttle-s3bucketstorage.s3.us-west-2.amazonaws.com/Switch/2024_Event_Recordings_Uploads/TNF_2024/NBC_EC_TNF_2024",
-              "createdBy": "tyler.ries@theswitch.tv",
-              "name": "NBC_EC_TNF_2024",
-              "lastModifiedOn": "2024-10-31T21:45:18.609Z",
-              "createdOn": "2024-10-31T21:45:18.609Z",
-              "storageProfileId": "2b70d7f7-6da7-48fe-b0c4-6a2454ab2142",
-              "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-              "authentication": {
-                "credentialType": "AWS_ROLE_ARN",
-                "storageType": "AWS_AUTHENTICATION",
-                "configId": "sQw5yWgQz"
-              },
-              "lastModifiedBy": "tyler.ries@theswitch.tv",
-              "storageProfileType": "AWS_S3",
-              "type": "INTERNAL",
-              "endpoint": {
-                "config": { "region": "us-west-2" },
-                "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-                "endpointId": "29b3d718-6003-4189-8502-b419df59db5f",
-                "createdBy": "tyler.ries@theswitch.tv",
-                "name": "us-west-2",
-                "lastModifiedOn": "2024-09-12T16:12:36.473Z",
-                "createdOn": "2023-09-13T16:06:24.635Z",
-                "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-                "lastModifiedBy": "john@jfc-it.com",
-                "endpointType": "AWS",
-                "accountName": "The Switch Enterprises",
-                "location": {
-                  "coordinates": { "latitude": 43.8, "longitude": -120.55 }
-                },
-                "status": { "state": "OK" }
-              }
-            },
-            "source": {
-              "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-              "endpointId": "6e442695-89cf-495d-a7ed-3a1037d3d499",
-              "url": "file:///%5C%5CPebble_Ingest5-MEDIA%5Cm$%5Cmedia",
-              "createdBy": "tyler.ries@theswitch.tv",
-              "name": "INGEST5",
-              "lastModifiedOn": "2024-10-31T20:43:17.683Z",
-              "createdOn": "2024-10-31T20:43:17.683Z",
-              "storageProfileId": "adcecbf5-0092-49e3-9d68-9890cff17f28",
-              "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-              "lastModifiedBy": "tyler.ries@theswitch.tv",
-              "storageProfileType": "ON_PREMISE_FILE_STORAGE",
-              "type": "INTERNAL",
-              "endpoint": {
-                "config": { "connectionSupport": { "inbound": true } },
-                "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-                "devices": [
-                  {
-                    "deviceId": "f7698e40-9d7f-4976-b38e-3c47d3b281c0",
-                    "accountId": "27587609-aecc-4655-828d-cac03492adf5",
-                    "serviceId": "c1bf2a69-ca1b-4d70-b92a-1a83b8d3a5eb",
-                    "name": "MediaShuttle Generated. Tenant ID [ 6c6e6c7d3cd2fe8ad81a24d51e10a7c4d2847be3 ]",
-                    "type": "MEDIASHUTTLE_STORAGE_SERVER",
-                    "activated": true,
-                    "keys": [
-                      {
-                        "publicKey": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAo+ELqcegI/eq/7ocTwjK\nN4ikD3PVsoG6tLxU3MYr+Eu374HVGI+EEI8mJjjSVXsN519z0Qy2ALkCglbO1tBz\nAYIncAoSZsesiMIdXVOBMARWnt2KVH685NZhgHYJ8QouyaGHzrL6OzOa6Ipp3hZO\nySvLcrmzhsGDvauez3XMennkHhh70Kit2vVDgObpkNfxFETbONXO1WpkluUaC8ZW\n4gi/miDxFj933xFi8RqJV0xl7OK393AhphmoxGos9j/NgIRrMRxmvtYlXpcg11UE\n2bkUlBlsvAmLhlniGq0mveiBV92ni09szzdZdr2bCR1l68feRbYpdCsYG3WWuZmk\nVwIDAQAB\n-----END PUBLIC KEY-----",
-                        "id": "4434d9b1-530c-4a00-8ebf-06feb5635c02",
-                        "generatedOn": "2024-08-20T16:57:01.214Z",
-                        "registeredOn": "2024-08-20T16:57:01.268Z"
-                      }
-                    ],
-                    "iotConnected": true,
-                    "createdOn": "2024-08-20T16:56:47.963Z",
-                    "lastModifiedOn": "2024-11-03T19:59:22.132Z",
-                    "activatedOn": "2024-08-20T16:57:01.268Z",
-                    "lastConnectedOn": "2024-11-03T19:59:08.892Z",
-                    "lastDisconnectedOn": "2024-11-03T19:59:07.423Z",
-                    "hardwareId": "4c4c4544-0036-4310-8048-b3c04f525933",
-                    "deviceVersions": {
-                      "signiantCommunicationService": "1.28.0",
-                      "MEDIASHUTTLE_STORAGE_SERVER": "6.3.1"
-                    },
-                    "metadata": {
-                      "systemInformation": {
-                        "distro": "Microsoft Windows Server 2022 Standard",
-                        "latencyToKnownEndpointMS": 65,
-                        "fqdn": "SIGNIANT-1",
-                        "release": "10.0.20348",
-                        "fileSystemSizeBytes": [
-                          {
-                            "size": 64424505344,
-                            "rw": true,
-                            "use": 66.53,
-                            "available": 21562695680,
-                            "used": 42861809664,
-                            "type": "NTFS",
-                            "fs": "C:",
-                            "mount": "C:"
-                          },
-                          {
-                            "size": 411568173056,
-                            "rw": true,
-                            "use": 56.37,
-                            "available": 179565780992,
-                            "used": 232002392064,
-                            "type": "NTFS",
-                            "fs": "D:",
-                            "mount": "D:"
-                          }
-                        ],
-                        "cpu": {
-                          "brand": "Xeon® E-2336",
-                          "cores": 12,
-                          "manufacturer": "Intel"
-                        },
-                        "uuid": "4c4c4544-0036-4310-8048-b3c04f525933",
-                        "platform": "Windows",
-                        "manufacturer": "Dell Inc.",
-                        "memoryBytes": {
-                          "dirty": null,
-                          "swapused": 69206016,
-                          "buffers": 0,
-                          "available": 29178286080,
-                          "active": 5020721152,
-                          "buffcache": 0,
-                          "swaptotal": 5100273664,
-                          "used": 5020721152,
-                          "slab": 0,
-                          "total": 34198908928,
-                          "swapfree": 5031067648,
-                          "writeback": null,
-                          "cached": 0,
-                          "free": 29178101760
-                        },
-                        "hostname": "SIGNIANT-1",
-                        "networkInterfaces": [
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "10.175.66.104",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fe80::3a17:9498:c168:c451",
-                            "mac": "14:23:f2:ad:34:a1",
-                            "speed": 10000,
-                            "mtu": null,
-                            "iface": "10G Internet",
-                            "default": true,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter #3",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.254.0"
-                          },
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "10.175.237.201",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fe80::a0d6:1af5:f958:c3a4",
-                            "mac": "14:23:f2:ac:f0:61",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "NAS 10G-3",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.255.0"
-                          },
-                          {
-                            "internal": false,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "169.254.1.2",
-                            "type": "wired",
-                            "ip6subnet": "ffff:ffff:ffff:ffff::",
-                            "carrierChanges": 0,
-                            "ip6": "fde1:53ba:e9a0:de11:c8a1:7aac:4402:df50",
-                            "mac": "c4:5a:b1:ad:31:ba",
-                            "speed": 425.984,
-                            "mtu": null,
-                            "iface": "Ethernet",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Remote NDIS Compatible Device",
-                            "operstate": "up",
-                            "dhcp": true,
-                            "ip4subnet": "255.255.255.0"
-                          },
-                          {
-                            "internal": true,
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": "127.0.0.1",
-                            "type": null,
-                            "ip6subnet": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
-                            "carrierChanges": 0,
-                            "ip6": "::1",
-                            "mac": "00:00:00:00:00:00",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "Loopback Pseudo-Interface 1",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Loopback Pseudo-Interface 1",
-                            "operstate": "down",
-                            "dhcp": false,
-                            "ip4subnet": "255.0.0.0"
-                          },
-                          {
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": null,
-                            "type": "wired",
-                            "ip6subnet": null,
-                            "carrierChanges": 0,
-                            "ip6": null,
-                            "mac": null,
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "Internet",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme Gigabit Ethernet",
-                            "operstate": "down",
-                            "dhcp": true,
-                            "ip4subnet": null
-                          },
-                          {
-                            "virtual": false,
-                            "ieee8021xAuth": "Not defined",
-                            "duplex": null,
-                            "ip4": null,
-                            "type": "wired",
-                            "ip6subnet": null,
-                            "carrierChanges": 0,
-                            "ip6": null,
-                            "mac": "14:23:f2:ad:34:a0",
-                            "speed": null,
-                            "mtu": null,
-                            "iface": "NAS 10G-1",
-                            "default": false,
-                            "ieee8021xState": "Disabled",
-                            "dnsSuffix": null,
-                            "ifaceName": "Broadcom NetXtreme E-Series Advanced Dual-port 10Gb SFP+ Ethernet PCIe Adapter",
-                            "operstate": "up",
-                            "dhcp": false,
-                            "ip4subnet": null
-                          }
-                        ],
-                        "model": "PowerEdge R350",
-                        "hostnameForLatencyTesting": "a2xy0445m8zinb.iot.us-east-1.amazonaws.com",
-                        "architecture": "x64"
-                      }
-                    },
-                    "location": {
-                      "continent": { "name": "North America", "code": "NA" },
-                      "country": { "name": "United States", "code": "US" },
-                      "city": { "name": "Los Angeles" },
-                      "resolutionDate": "2024-08-20T16:57:11.585Z",
-                      "postalCode": "90024",
-                      "coordinates": {
-                        "accuracyRadiusInKm": 1000,
-                        "latitude": 34.0648,
-                        "longitude": -118.4414
-                      },
-                      "timeZone": { "name": "America/Los_Angeles" },
-                      "region": { "name": "California", "code": "CA" },
-                      "resolutionMethod": "IP_GEOLOCATION",
-                      "network": {
-                        "ipAddress": "76.83.23.2",
-                        "autonomousSystemNumber": 20001,
-                        "organization": "TWC-20001-PACWEST",
-                        "isp": "Spectrum Business"
-                      }
-                    },
-                    "connection": {
-                      "publicIp": "76.83.23.2",
-                      "publicIpFormat": "V4"
-                    }
-                  }
-                ],
-                "endpointId": "6e442695-89cf-495d-a7ed-3a1037d3d499",
-                "createdBy": "john@jfc-it.com",
-                "name": "Signiant-1",
-                "lastModifiedOn": "2024-10-31T20:20:00.380Z",
-                "createdOn": "2024-10-31T20:20:00.380Z",
-                "serviceId": "b685fcf0-ad5a-412b-96c6-b80248ba7486",
-                "lastModifiedBy": "john@jfc-it.com",
-                "endpointType": "SIGNIANT_DEVICES",
-                "accountName": "The Switch Enterprises",
-                "location": {
-                  "continent": { "name": "North America", "code": "NA" },
-                  "country": { "name": "United States", "code": "US" },
-                  "city": { "name": "Los Angeles" },
-                  "resolutionDate": "2024-08-20T16:57:11.585Z",
-                  "postalCode": "90024",
-                  "coordinates": {
-                    "accuracyRadiusInKm": 1000,
-                    "latitude": 34.0648,
-                    "longitude": -118.4414
-                  },
-                  "timeZone": { "name": "America/Los_Angeles" },
-                  "region": { "name": "California", "code": "CA" },
-                  "resolutionMethod": "IP_GEOLOCATION",
-                  "network": {
-                    "ipAddress": "76.83.23.2",
-                    "autonomousSystemNumber": 20001,
-                    "organization": "TWC-20001-PACWEST",
-                    "isp": "Spectrum Business"
-                  }
-                },
-                "status": {
-                  "state": "OK",
-                  "components": { "devices": { "state": "OK" } }
-                }
-              }
-            },
-            "transferOptions": {
-              "areGrowingObjects": false,
-              "objectPatterns": {
-                "type": "GLOB",
-                "inclusions": ["**/*TNF_103124_NBCMAIN_DECO_SDR.mxf"]
-              }
-            }
-          },
-          "lastModifiedOn": "2024-11-01T04:39:07.781Z",
-          "createdOn": "2024-11-01T04:39:07.781Z",
-          "sigUpdateRegion": "us-east-1",
-          "jobId": "00e96bac-a38d-4022-97e5-60689801e16e",
-          "traceId": "6d68a7de-70da-43b3-9508-e562791026a6",
-          "actionId": "e299dcf2-6d2e-4762-9324-05a781cdf3d3",
-          "type": "TRANSFER"
+      },
+      "transferProgress": {
+        "failed": {
+          "bytes": 0,
+          "count": 0
+        },
+        "skipped": {
+          "bytes": 0,
+          "count": 0
+        },
+        "transferred": {
+          "bytes": 10,
+          "count": 2
+        },
+        "remaining": {
+          "bytes": 0,
+          "count": 0
         }
-      ],
-      "traceId": "6d68a7de-70da-43b3-9508-e562791026a6",
-      "options": { "clearBacklogOnPause": true, "clearBacklogOnStop": true },
-      "createdByAuthId": "FPZoq0NMeJ9LBSzkQA2EwJtisUqUMThb",
-      "lastModifiedByAuthId": "FPZoq0NMeJ9LBSzkQA2EwJtisUqUMThb"
-   }
+      },
+      "metadata": {
+        "actionId": "6fc4a977-8f91-4d18-8980-929e417ab015",
+        "clientId": "ca22048f-8f2e-497b-9d7f-902916f2ca81",
+        "executionId": "fbb1d894-0a14-4834-b149-03f5e2a20c91",
+        "jobId": "d3a08cc9-f980-49cb-b844-45601b68aaf3",
+        "serverId": "1142ace8-9fbc-4500-b7c5-7240b0cfd929"
+      },
+      "createdOn": "2020-06-19T17:45:53.123Z",
+      "lastModifiedOn": "2020-06-19T17:45:53.123Z"
+    }
   ]
 }
+
+
+JetJobSearchResponse{
+  description:	
+  
+  Response from listing jobs.
+  items	[
+  maxItems: 100
+  JetSearchJob{
+  jobId	string
+  example: bcd4bfd3-b826-4f82-a2d9-78bd29700bf2
+  
+  The unique job identifier.
+  serviceId	string
+  example: bcd4bfd3-b826-4f82-a2d9-78bd29700bf2
+  
+  The unique service identifier.
+  groupIds	[string($uuid)
+  
+  List of associated groupIds that include this job.
+  ]
+  storageProfileIds	[string($uuid)
+  
+  List of storage profiles associated with this job.
+  ]
+  endpointIds	[string($uuid)
+  
+  List of endpoint identifiers associated with this job.
+  ]
+  deleted	boolean
+  example: false
+  
+  Identifies whether a job is deleted or not.
+  isJobWithGrowingObjects	boolean
+  example: false
+  
+  Indicates if the job was configured for growing objects
+  triggerTypes	[[...]]
+  jobName	string
+  example: Example Jet Job
+  
+  The job name.
+  activeAlerts	JetSearchJobAlerts[...]
+  status	string
+  example: IN_PROGRESS
+  
+  The status of the job:
+  
+      READY: The job waiting for a trigger to initiate a transfer.
+      IN_PROGRESS: The job is in the process of transferring data.
+      ERROR: There was a problem with the execution of the job which may affect future transfer attempts.
+      PAUSED: The job is paused. The current transfer is halted and trigger conditions are ignored until the job is unpaused.
+  
+  Enum:
+  [ READY, IN_PROGRESS, ERROR, PAUSED ]
+  errorCode	string
+  example: RETRYING_TRANSFER
+  
+  The code for an error condition.
+  
+  Note that it is possible to get the RETRYING_TRANSFER error code even when the job itself is not in an error state. This implies that there was a problem with the previous transfer.
+  Enum:
+  [ RETRYING_TRANSFER, CANNOT_MONITOR_FOLDER, SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE ]
+  filesRemaining	number
+  example: 5
+  
+  The number of files remaining in the current transfer. Will be undefined when a transfer is not currently in progress.
+  currentRateBitsPerSecond	number
+  example: 1048576
+  
+  The transfer speed (bits/second)
+  estimatedCompletionSeconds	number
+  example: 3600
+  
+  Estimated time in seconds until the transfer completes.
+  lastActivity	string($date-time)
+  example: 2024-06-09T15:50:37.987Z
+  
+  The last time there was activity associated with the job.
+  routeId	string($uuid)
+  example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+  
+  Route identifier associated with the job.
+  }]
+  totalResultCount	totalResultCountnumber
+  
+  The total number of records matching the given search criteria. This number should always be >= to the number of search results returned.
+  }

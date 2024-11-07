@@ -122,61 +122,166 @@ export const updateJobTrigger = async (jobId) => {
 
     const job = await getResponse.json();
     
-    // Get the existing trigger or create a new one
-    const existingTrigger = job.triggers?.[0] || {};
-    const source = job.actions?.[0]?.data?.source;
-    
-    // Create the HOT_FOLDER trigger with all required properties
-    const hotFolderTrigger = {
-      ...existingTrigger,
-      type: "HOT_FOLDER",
-      events: [
-        "hotFolder.files.discovered",
-        "hotFolder.files.created",
-        "hotFolder.files.modified",
-        "hotFolder.signature.changed"
-      ],
-      metadata: {
-        ...existingTrigger.metadata,
-        monitorId: existingTrigger.metadata?.monitorId || `${jobId}-monitor`
-      },
-      monitor: {
-        ...existingTrigger.monitor,
-        monitorId: existingTrigger.monitor?.monitorId || `${jobId}-monitor`,
-        accountId: source?.accountId,
-        serviceId: source?.endpoint?.devices?.[0]?.serviceId,
-        deviceId: source?.endpoint?.devices?.[0]?.deviceId,
-        deviceStatus: "OK",
-        initializationStatus: "OK",
-        url: source?.url,
-        status: { state: "OK" }
-      },
-      data: {
-        ...existingTrigger.data,
-        source: source
-      }
-    };
-
-    // Update the job with the new trigger
-    const updatedJob = {
-      ...job,
-      triggers: [hotFolderTrigger]
-    };
-
-    const updateResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      method: 'PUT',
+    // Update the job with the hot folder configuration using PATCH
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
       headers,
-      body: JSON.stringify(updatedJob)
+      body: JSON.stringify({
+        paused: job.paused, // Preserve the paused state
+        actions: job.actions, // Preserve existing actions
+        triggers: [{
+          type: "HOT_FOLDER",
+          events: [
+            "hotFolder.files.discovered",
+            "hotFolder.files.created",
+            "hotFolder.files.modified",
+            "hotFolder.signature.changed"
+          ],
+          data: {
+            source: job.actions[0].data.source // Use existing source data
+          }
+        }]
+      })
     });
 
-    if (!updateResponse.ok) {
-      const errorText = await updateResponse.text();
+    if (!response.ok) {
+      const errorText = await response.text();
       throw new Error(`Failed to update job trigger: ${errorText}`);
     }
 
     return true;
   } catch (error) {
     console.error('Error updating job trigger:', error);
+    throw error;
+  }
+};
+
+// Function to get transfer details including progress
+export const getTransferDetails = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}/transfers?state=IN_PROGRESS`, {
+      headers
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch transfer details');
+    }
+
+    const data = await response.json();
+    if (!data.items || data.items.length === 0) {
+      return null;
+    }
+
+    const transfer = data.items[0];
+    const progress = transfer.transferProgress;
+
+    return {
+      transferId: transfer.transferId,
+      state: transfer.state,
+      currentRateBitsPerSecond: transfer.currentRateBitsPerSecond,
+      startTime: transfer.createdOn,
+      bytesTransferred: progress.transferred.bytes,
+      filesRemaining: progress.remaining.count,
+      totalResultCount: progress.transferred.count + progress.remaining.count,
+      percentComplete: progress.transferred.count / (progress.transferred.count + progress.remaining.count) * 100
+    };
+  } catch (error) {
+    console.error('Error fetching transfer details:', error);
+    return null;
+  }
+};
+
+// Function to pause a folder (change from HOT_FOLDER to MANUAL)
+export const pauseFolder = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the current job to preserve other settings
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Update the job to MANUAL trigger and set paused to true
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: true,
+        actions: job.actions,
+        triggers: [{
+          type: "MANUAL",
+          data: {
+            source: job.actions[0].data.source
+          }
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to pause folder: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error pausing folder:', error);
+    throw error;
+  }
+};
+
+// Function to start a folder (change from MANUAL to HOT_FOLDER)
+export const startFolder = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the current job to preserve other settings
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Update the job to HOT_FOLDER trigger and set paused to false
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: false,
+        actions: job.actions,
+        triggers: [{
+          type: "HOT_FOLDER",
+          events: [
+            "hotFolder.files.discovered",
+            "hotFolder.files.created",
+            "hotFolder.files.modified",
+            "hotFolder.signature.changed"
+          ],
+          data: {
+            source: job.actions[0].data.source
+          }
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to start folder: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error starting folder:', error);
     throw error;
   }
 };

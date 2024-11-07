@@ -4,22 +4,24 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '.
 import { Badge } from '../components/ui/badge';
 import { Progress } from '../components/ui/progress';
 import { Input } from '../components/ui/input';
-import { Search, FileText, Loader2 } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Search, FileText, Loader2, Play, Pause } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getAuthHeaders } from '../lib/auth-utils';
+import { pauseFolder, startFolder } from '../lib/signiant';
 
-
-  /**
-   * The FileMonitor component fetches a list of files being transferred from the Signiant Platform API and displays them in a table.
-   * The table displays the file path, size, status, last activity time, and type.
-   * The component also displays a set of stats cards above the table, which show the total number of files, the number of files in each state, and the total size of all files.
-   * The component also includes a search bar which allows the user to filter the files by file path.
-   * The component is refreshed every 30 seconds.
-   */
+/**
+ * The FileMonitor component fetches a list of files being transferred from the Signiant Platform API and displays them in a table.
+ * The table displays the file path, size, status, last activity time, and type.
+ * The component also displays a set of stats cards above the table, which show the total number of files, the number of files in each state, and the total size of all files.
+ * The component also includes a search bar which allows the user to filter the files by file path.
+ * The component is refreshed every 30 seconds.
+ */
 
 const FileMonitor = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
@@ -55,6 +57,47 @@ const FileMonitor = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handlePauseFolder = async (jobId) => {
+    setActionLoading(true);
+    try {
+      await pauseFolder(jobId);
+      toast({
+        title: "Success",
+        description: "Folder paused successfully",
+      });
+      fetchFiles(); // Refresh the data
+    } catch (error) {
+      console.error('Error pausing folder:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to pause folder",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartFolder = async (jobId) => {
+    setActionLoading(true);
+    try {
+      await startFolder(jobId);
+      toast({
+        title: "Success",
+        description: "Folder started successfully",
+      });
+      fetchFiles(); // Refresh the data
+    } catch (error) {
+      console.error('Error starting folder:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start folder",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   /**
    * Converts a number of bytes to a human-readable string (e.g. '3.2 KB')
@@ -78,6 +121,8 @@ const FileMonitor = () => {
         return 'bg-blue-500 text-white';
       case 'FAILED':
         return 'bg-red-500 text-white';
+      case 'PAUSED':
+        return 'bg-yellow-500 text-white';
       default:
         return 'bg-gray-500 text-white';
     }
@@ -183,6 +228,7 @@ const FileMonitor = () => {
                 <TableHead>Status</TableHead>
                 <TableHead>Last Activity</TableHead>
                 <TableHead>Type</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -200,6 +246,37 @@ const FileMonitor = () => {
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{file.fileType}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    {file.state === 'PAUSED' ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStartFolder(file.jobId)}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Play className="h-4 w-4 mr-1" />
+                        )}
+                        Start
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handlePauseFolder(file.jobId)}
+                        disabled={actionLoading}
+                      >
+                        {actionLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Pause className="h-4 w-4 mr-1" />
+                        )}
+                        Pause
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
