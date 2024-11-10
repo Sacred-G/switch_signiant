@@ -13,8 +13,7 @@ import {
 } from '../components/ui/select';
 import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
-import { getAuthHeaders } from '../lib/auth-utils';
-
+import { getSigniantHeaders } from '../lib/signiant';
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   
@@ -64,7 +63,7 @@ const TransferManager = () => {
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
-        const headers = await getAuthHeaders();
+        const headers = await getSigniantHeaders();
         const response = await fetch(
           "https://platform-api-service.services.cloud.signiant.com/v1/storageProfiles",
           {

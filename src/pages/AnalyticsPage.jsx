@@ -28,6 +28,7 @@ const AnalyticsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false); // New loading state for actions
   const { toast } = useToast();
 
   const fetchTransferForJob = async (jobId) => {
@@ -48,6 +49,7 @@ const AnalyticsPage = () => {
   };
 
   const fetchJobs = async () => {
+    setLoading(true); // Set loading state
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
       const response = await fetch('/platform-api/v1/jobs/search', {
@@ -84,7 +86,7 @@ const AnalyticsPage = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -117,6 +119,7 @@ const AnalyticsPage = () => {
   };
 
   const handleJobAction = async (jobId, action) => {
+    setActionLoading(true); // Set action loading state
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
       const response = await fetch(`/platform-api/v1/jobs/${jobId}`, {
@@ -149,10 +152,13 @@ const AnalyticsPage = () => {
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setActionLoading(false); // Reset action loading state
     }
   };
 
   const handlePauseFolder = async (jobId) => {
+    setActionLoading(true); // Set action loading state
     try {
       await pauseFolder(jobId);
       toast({
@@ -167,10 +173,13 @@ const AnalyticsPage = () => {
         description: error.message || "Failed to pause folder",
         variant: "destructive",
       });
+    } finally {
+      setActionLoading(false); // Reset action loading state
     }
   };
 
   const handleStartFolder = async (jobId) => {
+    setActionLoading(true); // Set action loading state
     try {
       await startFolder(jobId);
       toast({
@@ -185,10 +194,13 @@ const AnalyticsPage = () => {
         description: error.message || "Failed to start folder",
         variant: "destructive",
       });
+    } finally {
+      setActionLoading(false); // Reset action loading state
     }
   };
 
   const handleDeleteJob = async (jobId) => {
+    setActionLoading(true); // Set action loading state
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
       const response = await fetch(`/platform-api/v1/jobs/${jobId}`, {
@@ -215,6 +227,8 @@ const AnalyticsPage = () => {
         description: error.message,
         variant: "destructive"
       });
+    } finally {
+      setActionLoading(false); // Reset action loading state
     }
   };
 
@@ -380,6 +394,7 @@ const AnalyticsPage = () => {
                             variant="outline"
                             onClick={() => handleJobAction(job.jobId, 'IN_PROGRESS')}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                            disabled={actionLoading} // Disable button while loading
                           >
                             <Play className="w-4 h-4" />
                           </Button>
@@ -390,6 +405,7 @@ const AnalyticsPage = () => {
                             variant="outline"
                             onClick={() => handlePauseFolder(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                            disabled={actionLoading} // Disable button while loading
                           >
                             <Pause className="w-4 h-4" />
                           </Button>
@@ -400,6 +416,7 @@ const AnalyticsPage = () => {
                             variant="outline"
                             onClick={() => handleStartFolder(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                            disabled={actionLoading} // Disable button while loading
                           >
                             <Play className="w-4 h-4" />
                           </Button>
@@ -409,6 +426,7 @@ const AnalyticsPage = () => {
                           variant="outline"
                           onClick={() => handleDeleteJob(job.jobId)}
                           className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                          disabled={actionLoading} // Disable button while loading
                         >
                           <Trash className="w-4 h-4" />
                         </Button>

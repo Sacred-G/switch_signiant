@@ -1,0 +1,66 @@
+JobFilesResponse Schema
+
+{
+description: 
+A get job files response.
+items	[
+
+The list of files transferred by a job.
+JobFile{
+description:	
+
+A file record associated with a job.
+createdOn	string($date-time)
+example: 2018-12-17T12:43:12.432Z
+
+The timestamp of when the file record was created.
+destinationDeviceId	string($uuid)
+example: ffd6458b-17eb-45f4-a806-d21199bb0ee3
+
+The transfer destination device identifier (deviceId).
+executionId	string($uuid)
+example: 159ee4d1-c223-410c-83af-77a257198139
+
+The job action execution identifier.
+fileType	string
+example: file
+
+The type of data.
+Enum:
+[ file, directory ]
+jobId	string($uuid)
+example: 622d703f-b136-4f8a-9884-167ab7b8bde7
+
+The job identifier.
+lastEventTime	string($date-time)
+example: 2018-12-17T12:43:12.432Z
+
+The timestamp of the last event concerning the file.
+lastModifiedOn	string($date-time)
+example: 2018-12-17T12:43:12.432Z
+
+The timestamp of when the file record was last updated.
+sizeInBytes	number
+example: 200
+
+The size of the file in bytes.
+sourceDeviceId	string($uuid)
+example: 875530f9-9dc2-443d-bc69-43a6585655b6
+
+The transfer source device identifier (deviceId).
+state	string
+example: IN_PROGRESS
+
+The transfer state of the file.
+Enum:
+[ IN_PROGRESS, COMPLETED, FAILED ]
+transferId	string($uuid)
+example: 749c26d0-1c6a-4815-a9d1-f5eb94be92c0
+
+The transfer identifier.
+url	string
+example: file:///test/path
+
+The path for the file transferred from the source device. For a shared job when the partner fetches the files, the url will be a relative path without the file:// prefix
+}]
+}

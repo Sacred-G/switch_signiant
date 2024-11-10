@@ -2,8 +2,8 @@ import * as React from 'react';
 import { useState, useEffect } from 'react';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Button } from "../components/ui/button"
+import { Input } from '../components/ui/input'
 import { 
   Table, 
   TableHeader, 
@@ -25,11 +25,61 @@ import {
   FolderInput
 } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
-import { getAuthHeaders } from '../lib/auth-utils';
-import { deleteJob, updateJobTrigger, getTransferDetails } from '../lib/signiant';
+import { getSigniantHeaders, deleteJob, updateJobTrigger, getTransferDetails } from '../lib/signiant';
 import { TransferProgress } from '../components/transferProgress';
 
-const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, jobName }) => {
+interface DeleteConfirmationDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (confirmText: string) => Promise<void>;
+  jobName?: string;
+}
+
+interface TransferDetailsType {
+  percentComplete: number;
+  filesRemaining: number;
+  bytesTransferred: number;
+  startTime: string;
+  currentRateBitsPerSecond: number;
+}
+
+interface Job {
+    modifiedOn: string;
+    jobId: string;
+    name: string;
+    status: string;
+    lastModifiedOn: string;
+    transferDetails: string | null;
+    activeAlerts: string | null;
+    actions: Array<{
+      [x: string]: any;
+      data: {
+        source: {
+          name: string;
+        };
+        destination: {
+          name: string;
+          config?: {
+            path: string;
+          };
+        };
+      };
+    }>;
+    createdByAuthId: string;
+    lastModifiedByAuthId: string;
+    createdOn: string;
+    triggerType: string;
+    triggers?: Array<{
+      type: string;
+      monitor?: {
+        status?: {
+          state: string;
+        };
+      };
+    }>;
+  }
+
+const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({ isOpen, onClose, onConfirm, jobName }) => {
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -88,18 +138,18 @@ const DeleteConfirmationDialog = ({ isOpen, onClose, onConfirm, jobName }) => {
   );
 };
 
-const JobsPage = () => {
-  const [jobs, setJobs] = useState([]);
+const JobsPage: React.FC = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [expandedRows, setExpandedRows] = useState(new Set());
+  const [error, setError] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const { toast } = useToast();
   
   const fetchJobs = async () => {
     try {
-      const headers = await getAuthHeaders();
+      const headers = await getSigniantHeaders();
       const response = await fetch(`${import.meta.env.VITE_SIGNIANT_API_URL}/v1/jobs`, {
         headers
       });
@@ -109,7 +159,7 @@ const JobsPage = () => {
       }
   
       const data = await response.json();
-      const jobsWithDetails = await Promise.all(data.items.map(async (job) => {
+      const jobsWithDetails = await Promise.all(data.items.map(async (job: Job) => {
         // Get monitor status and action status
         const monitorStatus = job.triggers?.[0]?.monitor?.status?.state;
         const actionStatus = job.actions?.[0]?.status?.state;
@@ -153,7 +203,7 @@ const JobsPage = () => {
       setJobs(jobsWithDetails);
     } catch (error) {
       console.error('Error fetching jobs:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Failed to fetch jobs');
       toast({
         title: "Error",
         description: "Failed to load jobs",
@@ -176,13 +226,15 @@ const JobsPage = () => {
     return () => clearInterval(interval);
   }, [jobs]);
 
-  const handleDeleteClick = (e, job) => {
+  const handleDeleteClick = (e: React.MouseEvent, job: Job) => {
     e.stopPropagation();
     setSelectedJob(job);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async (confirmText) => {
+  const handleDeleteConfirm = async (confirmText: string) => {
+    if (!selectedJob) return;
+    
     try {
       await deleteJob(selectedJob.jobId, confirmText);
       toast({
@@ -194,14 +246,14 @@ const JobsPage = () => {
       console.error('Error deleting job:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to delete job",
+        description: error instanceof Error ? error.message : "Failed to delete job",
         variant: "destructive",
       });
       throw error;
     }
   };
 
-  const handleHotFolderClick = async (e, job) => {
+  const handleHotFolderClick = async (e: React.MouseEvent, job: Job) => {
     e.stopPropagation();
     try {
       await updateJobTrigger(job.jobId);
@@ -214,7 +266,7 @@ const JobsPage = () => {
       console.error('Error updating job trigger:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to update job trigger",
+        description: error instanceof Error ? error.message : "Failed to update job trigger",
         variant: "destructive",
       });
     }
@@ -246,7 +298,7 @@ const JobsPage = () => {
     return { total, completed, inProgress, failed, ready, paused, successRate };
   };
 
-  const toggleRowExpansion = (jobId) => {
+  const toggleRowExpansion = (jobId: string) => {
     const newExpandedRows = new Set(expandedRows);
     if (expandedRows.has(jobId)) {
       newExpandedRows.delete(jobId);
@@ -256,7 +308,7 @@ const JobsPage = () => {
     setExpandedRows(newExpandedRows);
   };
 
-  const getStatusVariant = (status, alerts = []) => {
+  const getStatusVariant = (status: string, alerts: Array<{ type: string }> = []) => {
     const hasCriticalAlert = alerts.some(alert => 
       ['SOURCE_ENDPOINT_OFFLINE', 'DESTINATION_ENDPOINT_OFFLINE', 'IN_PROGRESS_TRANSFER_HAS_ERRORS']
       .includes(alert.type)
@@ -281,7 +333,7 @@ const JobsPage = () => {
     }
   };
   
-  const getStatusDisplay = (status) => {
+  const getStatusDisplay = (status: string) => {
     switch (status?.toUpperCase()) {
       case 'OK':
       case 'COMPLETED':
@@ -299,7 +351,7 @@ const JobsPage = () => {
     }
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'N/A';
@@ -324,7 +376,16 @@ const JobsPage = () => {
     });
   };
 
-  const StatCard = ({ title, value, subtitle, icon: Icon, bgColor, textColor }) => (
+  interface StatCardProps {
+    title: string;
+    value: number;
+    subtitle: string;
+    icon: React.ElementType;
+    bgColor: string;
+    textColor: string;
+  }
+
+  const StatCard: React.FC<StatCardProps> = ({ title, value, subtitle, icon: Icon, bgColor, textColor }) => (
     <Card className={`bg-white shadow-md`}>
       <div className="p-6">
         <div className="flex justify-between items-start">
@@ -435,7 +496,6 @@ const JobsPage = () => {
           <TableBody>
             {jobs.map(job => {
               const isExpanded = expandedRows.has(job.jobId);
-              const destination = job.actions?.[0]?.data?.destination;
 
               return (
                 <React.Fragment key={job.jobId}>

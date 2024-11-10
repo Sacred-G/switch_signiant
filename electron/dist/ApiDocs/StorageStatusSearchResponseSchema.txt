@@ -1,0 +1,95 @@
+StorageStatusSearchResponse Schema
+
+
+{
+items	[StorageStatus{
+description:	
+
+Storage index details
+storageProfileId	string($uuid)
+example: 451ff121-79b5-403e-a64b-4718dc17b123
+
+Storage profile identifier
+accountId	string($uuid)
+example: 63b603e4-fcaf-4b65-abe8-743dd2940123
+
+Storage profile's associated account identifier
+path	string
+example: path/to/bucket
+
+Storage profile path
+endpoint	{
+description:	
+
+Endpoint associated with the storage profile
+name	string
+example: My endpoint
+
+Endpoint name
+id	string($uuid)
+example: 5086cedc-ce77-4232-a1e3-e951a66a9123
+
+Endpoint identifier
+status	string
+example: ONLINE
+
+Indicates the current status of the endpoint
+Enum:
+[ ONLINE, OFFLINE ]
+lastModifiedOn	string($date-time)
+example: 2021-10-27T19:44:32.812Z
+
+Represents the last date of modification of this resource
+}
+storageProfileType	StorageProfileTypestring
+
+Indicates the type of storage profile you want to receive in your response
+Enum:
+[ ON_PREMISE_FILE_STORAGE, AWS_S3, GCP_CLOUD_STORAGE, WASABI_OBJECT_STORAGE, AZURE_BLOB, S3_COMPATIBLE ]
+name	string
+example: STORAGE PROFILE NAME
+
+Storage profile name
+serviceId	string($uuid)
+example: 3860252d-3ff2-406d-b659-35d88e381123
+
+Indicates the service to which this storage profile belongs
+lastModifiedOn	string($date-time)
+example: 2020-04-20T15:18:28.277Z
+storageIndex	{
+description:	
+
+Object including details about storage indexing, if the storage is indexed
+id	string($uuid)
+example: be974bdd-40bb-40ee-b7b8-518ac36c677d
+status	stringEnum:
+[ INDEXED ]
+lastModifiedOn	string($date-time)
+example: 2021-02-22T17:10:32.708Z
+}
+jobs	[StorageStatusJob{
+accountId	string($uuid)
+example: 63b603e4-fcaf-4b65-abe8-743dd2940498
+
+Indicates the accountId associated with this job, this value can be different from the user's account if the job is a partner job
+name	string
+example: JOB NAME
+id	string($uuid)
+example: be974bdd-40bb-40ee-b7b8-518ac36c677d
+lastModifiedOn	string($date-time)
+example: 2021-02-22T17:10:32.708Z
+}]
+portals	[StorageStatusPortal{
+name	string
+example: PORTAL NAME
+id	string($uuid)
+example: be974bdd-40bb-40ee-b7b8-518ac36c677d
+lastModifiedOn	string($date-time)
+example: 2021-02-22T17:10:32.708Z
+}]
+}]
+totalResultCount	number
+example: 100
+
+The total number of storage profiles associated with the account
+}

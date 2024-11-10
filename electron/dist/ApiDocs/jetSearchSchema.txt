@@ -1,0 +1,199 @@
+
+{
+    JetJobSearchResponse{
+description:	
+
+Response from listing jobs.
+items	[
+maxItems: 100
+JetSearchJob{
+jobId	string
+example: bcd4bfd3-b826-4f82-a2d9-78bd29700bf2
+
+The unique job identifier.
+serviceId	[...]
+groupIds	[...]
+storageProfileIds	[...]
+endpointIds	[...]
+deleted	[...]
+isJobWithGrowingObjects	[...]
+triggerTypes	[...]
+jobName	[...]
+activeAlerts	JetSearchJobAlerts[
+
+An array containing one or more alerts that are currently applicable to the attached job. At the time of this writing it is not possible to have more than one alert of the same type and some alerts may be mutually exclusive (e.g. a monitor can not be both pending and in error).
+JetSearchJobAlertBody{
+type	JetSearchJobAlertTypestring
+
+The type of the alert.
+
+    SOURCE_ENDPOINT_OFFLINE: The source endpoint for this job is offline
+    DESTINATION_ENDPOINT_OFFLINE: The destination endpoint for this job is offline
+    MONITOR_FILE_PATH_INVALID: The file path provided for this monitor is invalid
+    MONITOR_FILE_PATH_UNREACHABLE: The file path provided does not exist or the SDCX Server does not have the proper permissions to access it.
+    MONITOR_REQUEST_TO_START_FAILED: The SDCX Server received the monitor start request but there was an error in processing the request.
+    MONITOR_ERROR: A catchall for all other types of monitor errors.
+    JOB_RECENTLY_FAILED: A recent (but not current) execution of this job has failed.
+    IN_PROGRESS_TRANSFER_HAS_ERRORS: There are errors in the current transfer.
+
+Enum:
+[ SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE, MONITOR_PENDING, MONITOR_FILE_PATH_INVALID, MONITOR_FILE_PATH_UNREACHABLE, MONITOR_REQUEST_TO_START_FAILED, MONITOR_ERROR, JOB_RECENTLY_FAILED, IN_PROGRESS_TRANSFER_HAS_ERRORS ]
+details	{
+description:	
+
+The various properties relevant to alert in question. Important: It may be necessary for callers to make follow-up requests to fetch all the necessary information for a human friendly display. For example it may be necessary to search for the endpoint name using endpointId.
+}
+example: OrderedMap { "endpointId": "296c4c6c-e2a3-4080-833a-aa20ed88db93" }
+}]
+status	string
+example: IN_PROGRESS
+
+The status of the job:
+
+    READY: The job waiting for a trigger to initiate a transfer.
+    IN_PROGRESS: The job is in the process of transferring data.
+    ERROR: There was a problem with the execution of the job which may affect future transfer attempts.
+    PAUSED: The job is paused. The current transfer is halted and trigger conditions are ignored until the job is unpaused.
+
+Enum:
+[ READY, IN_PROGRESS, ERROR, PAUSED ]
+errorCode	string
+example: RETRYING_TRANSFER
+
+The code for an error condition.
+
+Note that it is possible to get the RETRYING_TRANSFER error code even when the job itself is not in an error state. This implies that there was a problem with the previous transfer.
+Enum:
+[ RETRYING_TRANSFER, CANNOT_MONITOR_FOLDER, SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE ]
+filesRemaining	number
+example: 5
+
+The number of files remaining in the current transfer. Will be undefined when a transfer is not currently in progress.
+currentRateBitsPerSecond	number
+example: 1048576
+
+The transfer speed (bits/second)
+estimatedCompletionSeconds	number
+example: 3600
+
+Estimated time in seconds until the transfer completes.
+lastActivity	string($date-time)
+example: 2024-06-09T15:50:37.987Z
+
+The last time there was activity associated with the job.
+routeId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Route identifier associated with the job.
+}]
+totalResultCount	totalResultCountnumber
+
+The total number of records matching the given search criteria. This number should always be >= to the number of search results returned.
+}
+JetSearchJob{
+jobId	string
+example: bcd4bfd3-b826-4f82-a2d9-78bd29700bf2
+
+The unique job identifier.
+serviceId	string
+example: bcd4bfd3-b826-4f82-a2d9-78bd29700bf2
+
+The unique service identifier.
+groupIds	[string($uuid)
+
+List of associated groupIds that include this job.
+]
+storageProfileIds	[string($uuid)
+
+List of storage profiles associated with this job.
+]
+endpointIds	[string($uuid)
+
+List of endpoint identifiers associated with this job.
+]
+deleted	boolean
+example: false
+
+Identifies whether a job is deleted or not.
+isJobWithGrowingObjects	boolean
+example: false
+
+Indicates if the job was configured for growing objects
+triggerTypes	[string
+
+The type of trigger for this job:
+
+    HOT_FOLDER: Placing content in the path of the source storage profile will automatically trigger a transfer.
+    SCHEDULE: A transfer will periodically be initiated on a schedule defined at the time of job creation.
+    MANUAL_START: The job is manually triggered using the frontend or via an API call.
+
+Enum:
+[ HOT_FOLDER, SCHEDULE, MANUAL_START ]]
+jobName	string
+example: Example Jet Job
+
+The job name.
+activeAlerts	JetSearchJobAlerts[
+
+An array containing one or more alerts that are currently applicable to the attached job. At the time of this writing it is not possible to have more than one alert of the same type and some alerts may be mutually exclusive (e.g. a monitor can not be both pending and in error).
+JetSearchJobAlertBody{
+type	JetSearchJobAlertTypestring
+
+The type of the alert.
+
+    SOURCE_ENDPOINT_OFFLINE: The source endpoint for this job is offline
+    DESTINATION_ENDPOINT_OFFLINE: The destination endpoint for this job is offline
+    MONITOR_FILE_PATH_INVALID: The file path provided for this monitor is invalid
+    MONITOR_FILE_PATH_UNREACHABLE: The file path provided does not exist or the SDCX Server does not have the proper permissions to access it.
+    MONITOR_REQUEST_TO_START_FAILED: The SDCX Server received the monitor start request but there was an error in processing the request.
+    MONITOR_ERROR: A catchall for all other types of monitor errors.
+    JOB_RECENTLY_FAILED: A recent (but not current) execution of this job has failed.
+    IN_PROGRESS_TRANSFER_HAS_ERRORS: There are errors in the current transfer.
+
+Enum:
+[ SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE, MONITOR_PENDING, MONITOR_FILE_PATH_INVALID, MONITOR_FILE_PATH_UNREACHABLE, MONITOR_REQUEST_TO_START_FAILED, MONITOR_ERROR, JOB_RECENTLY_FAILED, IN_PROGRESS_TRANSFER_HAS_ERRORS ]
+details	{...}
+example: OrderedMap { "endpointId": "296c4c6c-e2a3-4080-833a-aa20ed88db93" }
+}]
+status	string
+example: IN_PROGRESS
+
+The status of the job:
+
+    READY: The job waiting for a trigger to initiate a transfer.
+    IN_PROGRESS: The job is in the process of transferring data.
+    ERROR: There was a problem with the execution of the job which may affect future transfer attempts.
+    PAUSED: The job is paused. The current transfer is halted and trigger conditions are ignored until the job is unpaused.
+
+Enum:
+[ READY, IN_PROGRESS, ERROR, PAUSED ]
+errorCode	string
+example: RETRYING_TRANSFER
+
+The code for an error condition.
+
+Note that it is possible to get the RETRYING_TRANSFER error code even when the job itself is not in an error state. This implies that there was a problem with the previous transfer.
+Enum:
+[ RETRYING_TRANSFER, CANNOT_MONITOR_FOLDER, SOURCE_ENDPOINT_OFFLINE, DESTINATION_ENDPOINT_OFFLINE ]
+filesRemaining	number
+example: 5
+
+The number of files remaining in the current transfer. Will be undefined when a transfer is not currently in progress.
+currentRateBitsPerSecond	number
+example: 1048576
+
+The transfer speed (bits/second)
+estimatedCompletionSeconds	number
+example: 3600
+
+Estimated time in seconds until the transfer completes.
+lastActivity	string($date-time)
+example: 2024-06-09T15:50:37.987Z
+
+The last time there was activity associated with the job.
+routeId	string($uuid)
+example: 4cec549d-cb09-472e-aaa1-360e70a715b3
+
+Route identifier associated with the job.
+}
+}

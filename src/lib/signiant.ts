@@ -1,41 +1,95 @@
 import config from '../config';
 
-const CLIENT_ID = 'FPZoq0NMeJ9LBSzkQA2EwJtisUqUMThb'
+const CLIENT_ID = config.SIGNIANT_CLIENT_ID;
+const CLIENT_SECRET = config.SIGNIANT_CLIENT_SECRET;
+const BASE_URL = config.SIGNIANT_API_URL;
 
-const CLIENT_SECRET = 'JIS3YY45ZUGrX8jt1GDz2htDxHpTbkhTQufZZYa75DCt6w0Jbc1bUItRk3BGSMYn'
-const BASE_URL = 'https://platform-api-service.services.cloud.signiant.com'
+interface TokenResponse {
+  access_token: string;
+  expires_in: number;
+}
+
+type HeadersInit = Record<string, string>;
+
+interface TransferProgress {
+  transferred: {
+    bytes: number;
+    count: number;
+  };
+  remaining: {
+    count: number;
+  };
+}
+
+interface Transfer {
+  transferId: string;
+  state: string;
+  currentRateBitsPerSecond: number;
+  createdOn: string;
+  transferProgress: TransferProgress;
+}
+
+interface TransferResponse {
+  items: Transfer[];
+}
+
+interface JobAction {
+  data: {
+    source: any;
+  };
+}
+
+interface Job {
+  paused: boolean;
+  actions: JobAction[];
+  triggers?: any[];
+}
+
+interface TransferDetails {
+  transferId: string;
+  state: string;
+  currentRateBitsPerSecond: number;
+  startTime: string;
+  bytesTransferred: number;
+  filesRemaining: number;
+  totalResultCount: number;
+  percentComplete: number;
+}
 
 export class SigniantApiAuth {
+  private static _instance: SigniantApiAuth | null = null;
+  private tokenUrl: string = `${BASE_URL}/oauth/token`;
+  private accessToken: string | null = null;
+  private tokenExpiry: Date | null = null;
+
   constructor() {
     if (SigniantApiAuth._instance) {
       return SigniantApiAuth._instance;
     }
-    
-    this.tokenUrl = `${BASE_URL}/oauth/token`;
-    this.accessToken = null;
-    this.tokenExpiry = null;
-    
     SigniantApiAuth._instance = this;
   }
 
-  static getInstance() {
-    return new SigniantApiAuth();
+  static getInstance(): SigniantApiAuth {
+    if (!SigniantApiAuth._instance) {
+      SigniantApiAuth._instance = new SigniantApiAuth();
+    }
+    return SigniantApiAuth._instance;
   }
 
-  async getAccessToken() {
-    if (!this.accessToken || new Date() >= this.tokenExpiry) {
+  async getAccessToken(): Promise<string> {
+    if (!this.accessToken || !this.tokenExpiry || new Date() >= this.tokenExpiry) {
       await this.refreshToken();
     }
-    return this.accessToken;
+    return this.accessToken!;
   }
 
-  async refreshToken() {
+  private async refreshToken(): Promise<void> {
     const formData = new URLSearchParams();
     formData.append('client_id', CLIENT_ID);
     formData.append('client_secret', CLIENT_SECRET);
     formData.append('grant_type', 'client_credentials');
 
-    const headers = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/x-www-form-urlencoded',
       'Accept': 'application/json'
     };
@@ -53,18 +107,18 @@ export class SigniantApiAuth {
         throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
       }
       
-      const data = await response.json();
+      const data = await response.json() as TokenResponse;
       console.log('Successfully obtained Signiant access token');
       this.accessToken = data.access_token;
       // Set expiry to 5 minutes before actual expiry to ensure token refreshes
       this.tokenExpiry = new Date(Date.now() + (data.expires_in - 300) * 1000);
     } catch (error) {
       console.error('Signiant token refresh error:', error);
-      throw new Error(`Failed to obtain Signiant access token: ${error.message}`);
+      throw new Error(`Failed to obtain Signiant access token: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  static async getAuthHeader() {
+  static async getAuthHeader(): Promise<HeadersInit> {
     const instance = SigniantApiAuth.getInstance();
     const token = await instance.getAccessToken();
     return {
@@ -74,17 +128,13 @@ export class SigniantApiAuth {
   }
 }
 
-// Initialize the singleton instance
-SigniantApiAuth._instance = null;
-
 // Helper function to get combined headers for API calls
-export const getSigniantHeaders = async () => {
-  const headers = await SigniantApiAuth.getAuthHeader();
-  return headers;
+export const getSigniantHeaders = async (): Promise<HeadersInit> => {
+  return await SigniantApiAuth.getAuthHeader();
 };
 
 // Function to delete a job with required confirmation
-export const deleteJob = async (jobId, confirmationText) => {
+export const deleteJob = async (jobId: string, confirmationText: string): Promise<boolean> => {
   // Require explicit confirmation text "DELETE" to proceed
   if (confirmationText !== "DELETE") {
     throw new Error("Deletion not confirmed. Please type 'DELETE' to confirm.");
@@ -110,7 +160,7 @@ export const deleteJob = async (jobId, confirmationText) => {
 };
 
 // Function to update job trigger to HOT_FOLDER
-export const updateJobTrigger = async (jobId) => {
+export const updateJobTrigger = async (jobId: string): Promise<boolean> => {
   try {
     const headers = await getSigniantHeaders();
     
@@ -123,15 +173,15 @@ export const updateJobTrigger = async (jobId) => {
       throw new Error('Failed to fetch job details');
     }
 
-    const job = await getResponse.json();
+    const job = await getResponse.json() as Job;
     
     // Update the job with the hot folder configuration using PATCH
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify({
-        paused: job.paused, // Preserve the paused state
-        actions: job.actions, // Preserve existing actions
+        paused: job.paused,
+        actions: job.actions,
         triggers: [{
           type: "HOT_FOLDER",
           events: [
@@ -141,7 +191,7 @@ export const updateJobTrigger = async (jobId) => {
             "hotFolder.signature.changed"
           ],
           data: {
-            source: job.actions[0].data.source // Use existing source data
+            source: job.actions[0].data.source
           }
         }]
       })
@@ -160,7 +210,7 @@ export const updateJobTrigger = async (jobId) => {
 };
 
 // Function to get transfer details including progress
-export const getTransferDetails = async (jobId) => {
+export const getTransferDetails = async (jobId: string): Promise<TransferDetails | null> => {
   try {
     const headers = await getSigniantHeaders();
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}/transfers?state=IN_PROGRESS`, {
@@ -171,7 +221,7 @@ export const getTransferDetails = async (jobId) => {
       throw new Error('Failed to fetch transfer details');
     }
 
-    const data = await response.json();
+    const data = await response.json() as TransferResponse;
     if (!data.items || data.items.length === 0) {
       return null;
     }
@@ -196,7 +246,7 @@ export const getTransferDetails = async (jobId) => {
 };
 
 // Function to pause a folder (change from HOT_FOLDER to MANUAL)
-export const pauseFolder = async (jobId) => {
+export const pauseFolder = async (jobId: string): Promise<boolean> => {
   try {
     const headers = await getSigniantHeaders();
     
@@ -209,7 +259,7 @@ export const pauseFolder = async (jobId) => {
       throw new Error('Failed to fetch job details');
     }
 
-    const job = await getResponse.json();
+    const job = await getResponse.json() as Job;
     
     // Update the job to MANUAL trigger and set paused to true
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
@@ -240,7 +290,7 @@ export const pauseFolder = async (jobId) => {
 };
 
 // Function to start a folder (change from MANUAL to HOT_FOLDER)
-export const startFolder = async (jobId) => {
+export const startFolder = async (jobId: string): Promise<boolean> => {
   try {
     const headers = await getSigniantHeaders();
     
@@ -253,7 +303,7 @@ export const startFolder = async (jobId) => {
       throw new Error('Failed to fetch job details');
     }
 
-    const job = await getResponse.json();
+    const job = await getResponse.json() as Job;
     
     // Update the job to HOT_FOLDER trigger and set paused to false
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
