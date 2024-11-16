@@ -8,6 +8,7 @@ import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { useToast } from '../components/ui/use-toast';
 import { TransferProgress, formatBytes } from '../components/transferProgress';
+import config from '../config';
 import { 
   RefreshCw, 
   Search, 
@@ -28,20 +29,21 @@ const AnalyticsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false); // New loading state for actions
+  const [actionLoading, setActionLoading] = useState(false);
   const { toast } = useToast();
 
   const fetchTransferForJob = async (jobId) => {
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
-      const response = await fetch(`/platform-api/v1/jobs/${jobId}/transfers?state=IN_PROGRESS`, {
+      const response = await fetch(`${config.SIGNIANT_API_URL}/v1/jobs/${jobId}/transfers?state=IN_PROGRESS`, {
         method: 'GET',
         headers
       });
 
       if (!response.ok) throw new Error('Failed to fetch transfer');
       const data = await response.json();
-      return data.items[0]; // Get the first transfer for this job
+      // Get the most recent transfer
+      return data.items[0];
     } catch (error) {
       console.error(`Failed to fetch transfer for job ${jobId}:`, error);
       return null;
@@ -49,10 +51,10 @@ const AnalyticsPage = () => {
   };
 
   const fetchJobs = async () => {
-    setLoading(true); // Set loading state
+    setLoading(true);
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
-      const response = await fetch('/platform-api/v1/jobs/search', {
+      const response = await fetch(`${config.SIGNIANT_API_URL}/v1/jobs/search`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -66,15 +68,12 @@ const AnalyticsPage = () => {
       const data = await response.json();
       setJobs(data.items);
 
-      // Fetch transfers for each job
       const transfers = {};
       await Promise.all(
         data.items.map(async (job) => {
-          if (job.status === 'IN_PROGRESS') {
-            const transfer = await fetchTransferForJob(job.jobId);
-            if (transfer) {
-              transfers[job.jobId] = transfer;
-            }
+          const transfer = await fetchTransferForJob(job.jobId);
+          if (transfer) {
+            transfers[job.jobId] = transfer;
           }
         })
       );
@@ -86,7 +85,7 @@ const AnalyticsPage = () => {
         variant: "destructive"
       });
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
@@ -118,54 +117,28 @@ const AnalyticsPage = () => {
     }
   };
 
-  const handleJobAction = async (jobId, action) => {
-    setActionLoading(true); // Set action loading state
-    try {
-      const headers = await SigniantApiAuth.getAuthHeader();
-      const response = await fetch(`/platform-api/v1/jobs/${jobId}`, {
-        method: 'PATCH',
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          status: action 
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `Failed to change job status`);
-      }
-      
-      toast({
-        title: "Success",
-        description: `Job status changed successfully`
-      });
-      
-      // Refresh jobs after a short delay to allow the state change to propagate
-      setTimeout(fetchJobs, 1000);
-    } catch (error) {
-      console.error('Job action error:', error);
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(false); // Reset action loading state
-    }
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(date);
   };
 
   const handlePauseFolder = async (jobId) => {
-    setActionLoading(true); // Set action loading state
+    setActionLoading(true);
     try {
       await pauseFolder(jobId);
       toast({
         title: "Success",
         description: "Folder paused successfully",
       });
-      fetchJobs(); // Refresh the job list
+      fetchJobs();
     } catch (error) {
       console.error('Error pausing folder:', error);
       toast({
@@ -174,19 +147,19 @@ const AnalyticsPage = () => {
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false); // Reset action loading state
+      setActionLoading(false);
     }
   };
 
   const handleStartFolder = async (jobId) => {
-    setActionLoading(true); // Set action loading state
+    setActionLoading(true);
     try {
       await startFolder(jobId);
       toast({
         title: "Success",
         description: "Folder started successfully",
       });
-      fetchJobs(); // Refresh the job list
+      fetchJobs();
     } catch (error) {
       console.error('Error starting folder:', error);
       toast({
@@ -195,15 +168,15 @@ const AnalyticsPage = () => {
         variant: "destructive",
       });
     } finally {
-      setActionLoading(false); // Reset action loading state
+      setActionLoading(false);
     }
   };
 
   const handleDeleteJob = async (jobId) => {
-    setActionLoading(true); // Set action loading state
+    setActionLoading(true);
     try {
       const headers = await SigniantApiAuth.getAuthHeader();
-      const response = await fetch(`/platform-api/v1/jobs/${jobId}`, {
+      const response = await fetch(`${config.SIGNIANT_API_URL}/v1/jobs/${jobId}`, {
         method: 'DELETE',
         headers
       });
@@ -218,7 +191,6 @@ const AnalyticsPage = () => {
         description: "Job deleted successfully"
       });
       
-      // Refresh jobs after a short delay to allow the deletion to propagate
       setTimeout(fetchJobs, 1000);
     } catch (error) {
       console.error('Delete job error:', error);
@@ -228,7 +200,7 @@ const AnalyticsPage = () => {
         variant: "destructive"
       });
     } finally {
-      setActionLoading(false); // Reset action loading state
+      setActionLoading(false);
     }
   };
 
@@ -246,6 +218,16 @@ const AnalyticsPage = () => {
     };
   };
 
+  const getTransferSize = (transfer) => {
+    if (!transfer?.objectsManifest?.summary?.bytes) return 0;
+    return transfer.objectsManifest.summary.bytes;
+  };
+
+  const getTransferFileCount = (transfer) => {
+    if (!transfer?.objectsManifest?.summary?.count) return 0;
+    return transfer.objectsManifest.summary.count;
+  };
+
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.jobName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || job.status === statusFilter;
@@ -259,7 +241,7 @@ const AnalyticsPage = () => {
     ready: jobs.filter(j => j.status === 'READY').length,
     paused: jobs.filter(j => j.status === 'PAUSED').length,
     totalBytes: Object.values(jobTransfers).reduce((acc, transfer) => 
-      acc + (transfer?.objectsManifest?.summary?.bytes || 0), 0
+      acc + getTransferSize(transfer), 0
     )
   };
 
@@ -273,7 +255,6 @@ const AnalyticsPage = () => {
         </Button>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { title: "Total Jobs", value: stats.total, icon: null },
@@ -295,7 +276,6 @@ const AnalyticsPage = () => {
         ))}
       </div>
 
-      {/* Filter Controls */}
       <div className="flex gap-4 items-center">
         <div className="flex-1">
           <Input
@@ -320,7 +300,6 @@ const AnalyticsPage = () => {
         </Select>
       </div>
 
-      {/* Jobs Table */}
       <Card className="dark:bg-gray-800 dark:border-gray-700">
         <CardHeader>
           <CardTitle className="dark:text-white">Active Jobs</CardTitle>
@@ -334,6 +313,7 @@ const AnalyticsPage = () => {
                 <TableHead className="dark:text-gray-400">Progress</TableHead>
                 <TableHead className="dark:text-gray-400">Size</TableHead>
                 <TableHead className="dark:text-gray-400">Files</TableHead>
+                <TableHead className="dark:text-gray-400">Last Modified</TableHead>
                 <TableHead className="dark:text-gray-400">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -341,6 +321,8 @@ const AnalyticsPage = () => {
               {filteredJobs.map((job) => {
                 const transfer = jobTransfers[job.jobId];
                 const transferProgress = formatTransferProgress(transfer);
+                const size = getTransferSize(transfer);
+                const fileCount = getTransferFileCount(transfer);
                 
                 return (
                   <TableRow key={job.jobId} className="dark:border-gray-700 dark:hover:bg-gray-700/50">
@@ -381,10 +363,13 @@ const AnalyticsPage = () => {
                       )}
                     </TableCell>
                     <TableCell className="dark:text-gray-200">
-                      {transfer ? formatBytes(transfer.objectsManifest?.summary?.bytes || 0) : 'N/A'}
+                      {size > 0 ? formatBytes(size) : '0 B'}
                     </TableCell>
                     <TableCell className="dark:text-gray-200">
-                      {transfer ? transfer.objectsManifest?.summary?.count || 0 : 'N/A'} files
+                      {fileCount > 0 ? `${fileCount} files` : '0 files'}
+                    </TableCell>
+                    <TableCell className="dark:text-gray-200">
+                      {formatDate(job.lastActivity)}
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
@@ -392,9 +377,9 @@ const AnalyticsPage = () => {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handleJobAction(job.jobId, 'IN_PROGRESS')}
+                            onClick={() => handleStartFolder(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading} // Disable button while loading
+                            disabled={actionLoading}
                           >
                             <Play className="w-4 h-4" />
                           </Button>
@@ -405,7 +390,7 @@ const AnalyticsPage = () => {
                             variant="outline"
                             onClick={() => handlePauseFolder(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading} // Disable button while loading
+                            disabled={actionLoading}
                           >
                             <Pause className="w-4 h-4" />
                           </Button>
@@ -416,7 +401,7 @@ const AnalyticsPage = () => {
                             variant="outline"
                             onClick={() => handleStartFolder(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading} // Disable button while loading
+                            disabled={actionLoading}
                           >
                             <Play className="w-4 h-4" />
                           </Button>
@@ -426,7 +411,7 @@ const AnalyticsPage = () => {
                           variant="outline"
                           onClick={() => handleDeleteJob(job.jobId)}
                           className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                          disabled={actionLoading} // Disable button while loading
+                          disabled={actionLoading}
                         >
                           <Trash className="w-4 h-4" />
                         </Button>

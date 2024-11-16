@@ -1,0 +1,193 @@
+
+
+
+0	Object { jobId: "02e91804-7a4f-464d-bf55-b58678b26e86", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "NOV5_ELECT_NIGHT_CLEAN_FEED_FIBER.mxf", … }
+jobId	"02e91804-7a4f-464d-bf55-b58678b26e86"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"NOV5_ELECT_NIGHT_CLEAN_FEED_FIBER.mxf"
+triggerTypes	[]
+status	"READY"
+lastActivity	"2024-11-12T20:32:35.876Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "428ad5aa-13ff-429c-8600-257ca40e0507", "a2340f43-ed20-4312-90d3-26c4140e33db" ]
+0	"428ad5aa-13ff-429c-8600-257ca40e0507"
+1	"a2340f43-ed20-4312-90d3-26c4140e33db"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+1	Object { jobId: "df5686ac-879e-4bac-90a4-227f6e9cfdf3", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_SWITCH_PQ.mxf - 20241111_221946", … }
+jobId	"df5686ac-879e-4bac-90a4-227f6e9cfdf3"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_SWITCH_PQ.mxf - 20241111_221946"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:28:47.657Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "f38ad4ae-321c-4203-8d9c-743b0a4bd65b", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"f38ad4ae-321c-4203-8d9c-743b0a4bd65b"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+2	Object { jobId: "7db54fe1-6dd0-48d2-aade-363cf1addaea", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_NBC_PQ.mxf - 20241111_222238", … }
+jobId	"7db54fe1-6dd0-48d2-aade-363cf1addaea"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_NBC_PQ.mxf - 20241111_222238"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:28:26.684Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "5ea1862c-2cb1-4d38-aedd-f4b9c0962df8", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"5ea1862c-2cb1-4d38-aedd-f4b9c0962df8"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+3	Object { jobId: "87349d2e-383b-44f8-9cbd-7f4538d65f8a", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_NBC_DECO_SDR.mxf - 20241111_222341", … }
+jobId	"87349d2e-383b-44f8-9cbd-7f4538d65f8a"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_NBC_DECO_SDR.mxf - 20241111_222341"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:27:44.986Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "adcecbf5-0092-49e3-9d68-9890cff17f28", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"adcecbf5-0092-49e3-9d68-9890cff17f28"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+4	Object { jobId: "6eaac0ed-f1bd-40a1-b463-a1272cd44c49", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_SWITCH DECO_SDR.mxf - 20241111_222457", … }
+jobId	"6eaac0ed-f1bd-40a1-b463-a1272cd44c49"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_SWITCH DECO_SDR.mxf - 20241111_222457"
+triggerTypes	[ "MANUAL" ]
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:27:08.877Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "adcecbf5-0092-49e3-9d68-9890cff17f28", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+5	Object { jobId: "f3f7cd87-3615-4636-b236-e3c7df8d7e52", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_BACKHAUL BITFIRE_HLG.mxf - 20241111_222708", … }
+jobId	"f3f7cd87-3615-4636-b236-e3c7df8d7e52"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_BACKHAUL BITFIRE_HLG.mxf - 20241111_222708"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:26:18.300Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "428ad5aa-13ff-429c-8600-257ca40e0507", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"428ad5aa-13ff-429c-8600-257ca40e0507"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+6	Object { jobId: "88bdde68-4209-4a68-b97b-ae50f6110f58", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_BACKHAUL_SATELLITE_HLG.mxf - 20241111_222800", … }
+jobId	"88bdde68-4209-4a68-b97b-ae50f6110f58"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_BACKHAUL_SATELLITE_HLG.mxf - 20241111_222800"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:25:16.425Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "428ad5aa-13ff-429c-8600-257ca40e0507", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"428ad5aa-13ff-429c-8600-257ca40e0507"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+7	Object { jobId: "3392d117-3df4-4e4a-8044-af06c9ec4640", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_BACKHAUL_FIBER_HLG.mxf - 20241111_222841", … }
+jobId	"3392d117-3df4-4e4a-8044-af06c9ec4640"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_BACKHAUL_FIBER_HLG.mxf - 20241111_222841"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:19:50.502Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "428ad5aa-13ff-429c-8600-257ca40e0507", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"428ad5aa-13ff-429c-8600-257ca40e0507"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+8	Object { jobId: "f2590594-ddab-479c-ba20-4a85568d860d", serviceId: "b685fcf0-ad5a-412b-96c6-b80248ba7486", jobName: "JF_NHL_111124_MNH_MVPD_SDR.mxf - 20241111_222115", … }
+jobId	"f2590594-ddab-479c-ba20-4a85568d860d"
+serviceId	"b685fcf0-ad5a-412b-96c6-b80248ba7486"
+jobName	"JF_NHL_111124_MNH_MVPD_SDR.mxf - 20241111_222115"
+triggerTypes	[ "MANUAL" ]
+0	"MANUAL"
+status	"READY"
+activeAlerts	[]
+filesRemaining	0
+currentRateBitsPerSecond	0
+estimatedCompletionSeconds	0
+lastActivity	"2024-11-12T07:08:35.863Z"
+endpointIds	[ "6e442695-89cf-495d-a7ed-3a1037d3d499", "29b3d718-6003-4189-8502-b419df59db5f" ]
+0	"6e442695-89cf-495d-a7ed-3a1037d3d499"
+1	"29b3d718-6003-4189-8502-b419df59db5f"
+storageProfileIds	[ "88366e93-8656-4743-ae94-3d8ef107f108", "c154064a-cea5-4f3e-89b8-2004b122da7f" ]
+0	"88366e93-8656-4743-ae94-3d8ef107f108"
+1	"c154064a-cea5-4f3e-89b8-2004b122da7f"
+isJobWithGrowingObjects	false
+groupIds	[ "d576dbb0-c04f-4a3c-8a1c-4351684098ed" ]
+0	"d576dbb0-c04f-4a3c-8a1c-4351684098ed"
+routeId	"aafcf389-f6b4-492e-8a81-3e5a934f922f"
+totalResultCount	9

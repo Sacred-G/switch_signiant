@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { SigniantAuth } from '../services/auth.ts';
+import { SigniantAuth } from '../services/auth';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');

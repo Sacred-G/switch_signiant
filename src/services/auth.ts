@@ -1,5 +1,6 @@
 // SigniantAuth.ts
 import { supabase } from '../lib/supabase'
+import { Session, AuthChangeEvent } from '@supabase/supabase-js'
 
 const isElectron = typeof window !== 'undefined' && !!window.electronAPI;
 
@@ -79,7 +80,7 @@ export const SigniantAuth = {
 
       // Store session when it becomes available if in Electron
       if (isElectron) {
-        window.electronAPI.handleAuthCallback(async (event, session) => {
+        window.electronAPI.handleAuthCallback(async (_event: any, session: Session) => {
           if (session) {
             await window.electronAPI.storeSession(session)
           }
@@ -93,7 +94,7 @@ export const SigniantAuth = {
     }
   },
 
-  async getSession() {
+  async getSession(): Promise<Session | null> {
     try {
       // First try to get session from electron store if available
       if (isElectron) {
@@ -125,12 +126,12 @@ export const SigniantAuth = {
     }
   },
 
-  async isAuthenticated() {
+  async isAuthenticated(): Promise<boolean> {
     const session = await this.getSession()
     return !!session
   },
 
-  async getAuthHeader() {
+  async getAuthHeader(): Promise<Record<string, string>> {
     const session = await this.getSession()
     return session ? {
       'Authorization': `Bearer ${session.access_token}`,
@@ -158,7 +159,7 @@ export const SigniantAuth = {
     }
   },
 
-  onAuthStateChange(callback) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
     // Set up supabase auth listener
     const subscription = supabase.auth.onAuthStateChange(async (event, session) => {
       // Store or clear session based on auth state if in Electron
@@ -176,7 +177,7 @@ export const SigniantAuth = {
     // Initialize with stored session
     this.getSession().then(session => {
       if (session) {
-        callback('INITIAL', session)
+        callback('SIGNED_IN', session)
       }
     })
 

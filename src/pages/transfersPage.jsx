@@ -14,6 +14,8 @@ import {
 import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getSigniantHeaders } from '../lib/signiant';
+
+// ... (keeping formatDate function unchanged)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   
@@ -56,10 +58,11 @@ const TransferManager = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [sources, setSources] = useState([]);
   const [destinations, setDestinations] = useState([]);
+  const [triggerType, setTriggerType] = useState('MANUAL');
+  const [isGrowingObjects, setIsGrowingObjects] = useState(false);
   const { toast } = useToast();
 
-  const fileNameWithWildcard = `**/${fileName}`;
-
+  // ... (keeping fetchProfiles and fetchData functions unchanged)
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
@@ -109,11 +112,15 @@ const TransferManager = () => {
 
   const fetchData = async () => {
     try {
-      const headers = await getAuthHeaders();
+      const headers = await getSigniantHeaders();
       
       const [jobsResponse, profilesResponse] = await Promise.all([
-        fetch('https://platform-api-service.services.cloud.signiant.com/v1/jobs', { headers }),
-        fetch('https://platform-api-service.services.cloud.signiant.com/v1/storageProfiles', { headers })
+        fetch('https://platform-api-service.services.cloud.signiant.com/v1/jobs', {
+          headers
+        }),
+        fetch('https://platform-api-service.services.cloud.signiant.com/v1/storageProfiles', {
+          headers
+        })
       ]);
 
       const [jobsData, profilesData] = await Promise.all([
@@ -143,19 +150,19 @@ const TransferManager = () => {
 
   const handleJobAction = async (jobId, action) => {
     try {
-      const headers = await getAuthHeaders();
+      const headers = await getSigniantHeaders();
       await fetch(
         `https://platform-api-service.services.cloud.signiant.com/v1/jobs/${jobId}`,
         {
           method: 'PATCH',
           headers,
-          body: JSON.stringify({ status: action })
+          body: JSON.stringify({ paused: action === "PAUSE" })
         }
       );
       
       toast({
         title: "Success",
-        description: `Job ${action.toLowerCase()} successfully`
+        description: `Job ${action.toLowerCase()}d successfully`
       });
       
       fetchData();
@@ -183,9 +190,14 @@ const TransferManager = () => {
     }
 
     try {
-      const headers = await getAuthHeaders();
+      const headers = await getSigniantHeaders();
+      
+      // Map UI trigger type to API trigger type
+      const apiTriggerType = triggerType === 'HOT_FOLDER' ? 'HOTFOLDER' : triggerType;
+      
       const jobBody = {
         name: fileName,
+        triggerTypes: [apiTriggerType], // Use mapped trigger type
         actions: [{
           type: "TRANSFER",
           data: {
@@ -197,21 +209,37 @@ const TransferManager = () => {
             },
             transferOptions: {
               objectPatterns: {
-                inclusions: [fileNameWithWildcard],
+                inclusions: [`**/${fileName}`],
                 type: "GLOB"
-              }
+              },
+              areGrowingObjects: isGrowingObjects,
+              ...(isGrowingObjects && {
+                growingObjects: {
+                  growingIdleTimeoutInSeconds: 5
+                }
+              })
             }
           }
         }],
         triggers: [{
-          type: "MANUAL",
+          type: triggerType,
           data: {
             source: {
               storageProfileId: selectedSource
             }
-          }
+          },
+          ...(triggerType === "HOT_FOLDER" && {
+            events: [
+              "hotFolder.files.discovered",
+              "hotFolder.files.created",
+              "hotFolder.files.modified",
+              "hotFolder.signature.changed"
+            ]
+          })
         }]
       };
+
+      console.log('Creating job with body:', jobBody); // Debug log
 
       const response = await fetch(
         "https://platform-api-service.services.cloud.signiant.com/v1/jobs",
@@ -232,6 +260,8 @@ const TransferManager = () => {
       setFileName('');
       setSelectedSource('');
       setSelectedDestination('');
+      setTriggerType('MANUAL');
+      setIsGrowingObjects(false);
       
       toast({
         title: "Success",
@@ -258,6 +288,7 @@ const TransferManager = () => {
       return matchesSearch && matchesStatus;
     });
 
+  // ... (rest of the component JSX remains unchanged)
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -274,6 +305,53 @@ const TransferManager = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-200">
+                  Trigger Type
+                </label>
+                <Select
+                  value={triggerType}
+                  onValueChange={setTriggerType}
+                >
+                  <SelectTrigger className="bg-purple-50 border-purple-200 hover:border-purple-300 focus:ring-purple-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue placeholder="Select trigger type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-purple-200 dark:bg-gray-800 dark:border-gray-700">
+                    <div className="py-2 px-2 text-sm font-medium text-purple-600 bg-purple-50 dark:bg-gray-700 dark:text-purple-400">
+                      Trigger Types
+                    </div>
+                    <SelectItem 
+                      value="MANUAL" 
+                      className="hover:bg-purple-50 focus:bg-purple-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                    >
+                      Manual Trigger
+                    </SelectItem>
+                    <SelectItem 
+                      value="HOT_FOLDER" 
+                      className="hover:bg-purple-50 focus:bg-purple-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                    >
+                      Hot Folder
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2 flex items-center">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isGrowingObjects}
+                    onChange={(e) => setIsGrowingObjects(e.target.checked)}
+                    className="form-checkbox h-4 w-4 text-purple-600 transition duration-150 ease-in-out"
+                  />
+                  <span className="text-sm font-medium dark:text-gray-200">
+                    Growing Objects
+                  </span>
+                </label>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-200">
                 Source Profile (Select Ingest)
@@ -491,7 +569,7 @@ const TransferManager = () => {
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 pt-2">
                     <span>Job Name: {transfer.name}</span>
                     <span>
-                      Last Activity: {new Date(transfer.lastModifiedOn).toLocaleString()}
+                      Last Activity: {formatDate(transfer.lastModifiedOn)}
                     </span>
                   </div>
                 </div>

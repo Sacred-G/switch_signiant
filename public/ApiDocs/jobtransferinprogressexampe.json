@@ -1,0 +1,80 @@
+{
+  "items": [
+    {
+      "transferId": "33ac2ace-aaaa-bbbb-86ec-c0fb3b8d74f2",
+      "state": "IN_PROGRESS",
+      "source": {
+        "accountId": "11111111-1234-abcd-4321-12345678e088",
+        "createdBy": "user@example.com",
+        "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "createdOn": "2024-11-16T03:27:01.383Z",
+        "deleted": true,
+        "deletedBy": "user@example.com",
+        "deletedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "endpointId": "11111111-abcd-1234-abcd-123abcdef123",
+        "lastModifiedBy": "user@example.com",
+        "lastModifiedAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "lastModifiedOn": "2024-11-16T03:27:01.383Z",
+        "name": "Example Endpoint",
+        "serviceId": "11111111-1234-abcd-4321-12345678e088",
+        "storageProfileId": "11111111-12345-abccd-12345",
+        "traceId": "11111111-12345-abccd-12345",
+        "type": "PRIVATE",
+        "url": "file:///path/to/folder"
+      },
+      "destination": {
+        "accountId": "11111111-1234-abcd-4321-12345678e088",
+        "createdBy": "user@example.com",
+        "createdByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "createdOn": "2024-11-16T03:27:01.383Z",
+        "deleted": true,
+        "deletedBy": "user@example.com",
+        "deletedByAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "endpointId": "11111111-abcd-1234-abcd-123abcdef123",
+        "lastModifiedBy": "user@example.com",
+        "lastModifiedAuthId": "1aaaaabbbbbbbbb2aaaaaaa3bbbbbbb4",
+        "lastModifiedOn": "2024-11-16T03:27:01.383Z",
+        "name": "Example Endpoint",
+        "serviceId": "11111111-1234-abcd-4321-12345678e088",
+        "storageProfileId": "11111111-12345-abccd-12345",
+        "traceId": "11111111-12345-abccd-12345",
+        "type": "PRIVATE",
+        "url": "file:///path/to/folder"
+      },
+      "objectsManifest": {
+        "manifestId": "a2853cef-31a0-4879-89e3-fa72126a780d",
+        "summary": {
+          "bytes": 10,
+          "count": 2
+        }
+      },
+      "transferProgress": {
+        "failed": {
+          "bytes": 0,
+          "count": 0
+        },
+        "skipped": {
+          "bytes": 0,
+          "count": 0
+        },
+        "transferred": {
+          "bytes": 10,
+          "count": 2
+        },
+        "remaining": {
+          "bytes": 0,
+          "count": 0
+        }
+      },
+      "metadata": {
+        "actionId": "6fc4a977-8f91-4d18-8980-929e417ab015",
+        "clientId": "ca22048f-8f2e-497b-9d7f-902916f2ca81",
+        "executionId": "fbb1d894-0a14-4834-b149-03f5e2a20c91",
+        "jobId": "d3a08cc9-f980-49cb-b844-45601b68aaf3",
+        "serverId": "1142ace8-9fbc-4500-b7c5-7240b0cfd929"
+      },
+      "createdOn": "2020-06-19T17:45:53.123Z",
+      "lastModifiedOn": "2020-06-19T17:45:53.123Z"
+    }
+  ]
+}

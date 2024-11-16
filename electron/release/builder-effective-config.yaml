@@ -1,0 +1,27 @@
+directories:
+  output: release
+  buildResources: build
+appId: com.signiant.dashboard
+productName: Signiant Dashboard
+files:
+  - filter:
+      - main.js
+      - dist/**/*
+      - node_modules/**/*
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: build/app.ico
+  artifactName: ${productName}-Setup-${version}.${ext}
+nsis:
+  oneClick: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Signiant Dashboard
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+electronVersion: 28.0.0

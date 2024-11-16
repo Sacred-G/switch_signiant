@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { List, Home, Repeat, LogOut, Sun, Moon } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { SigniantApiAuth } from '../../lib/signiant';
+import { SigniantAuth } from '../../services/auth';
 import { useTheme } from '../ThemeProvider';
 import { BarChart } from 'lucide-react';
 
@@ -50,7 +50,7 @@ const DashboardLayout = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await SigniantApiAuth.logout();
+      await SigniantAuth.logout();
       navigate('/login');
     } catch (error) {
       console.error('Logout failed:', error);

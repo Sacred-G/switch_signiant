@@ -1,0 +1,20 @@
+# Electron files
+electron/
+*.exe
+*.dmg
+*.app
+*.icns
+*.ico
+*.nsh
+*.plist
+
+# Build artifacts
+dist/electron
+build/
+
+# Development files
+node_modules/
+*.log
+
+# Large files
+public/ApiDocs/*.json

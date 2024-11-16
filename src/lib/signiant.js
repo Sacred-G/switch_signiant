@@ -1,9 +1,8 @@
 import config from '../config';
 
-const CLIENT_ID = 'FPZoq0NMeJ9LBSzkQA2EwJtisUqUMThb'
-
-const CLIENT_SECRET = 'JIS3YY45ZUGrX8jt1GDz2htDxHpTbkhTQufZZYa75DCt6w0Jbc1bUItRk3BGSMYn'
-const BASE_URL = 'https://platform-api-service.services.cloud.signiant.com'
+const CLIENT_ID = config.SIGNIANT_CLIENT_ID;
+const CLIENT_SECRET = config.SIGNIANT_CLIENT_SECRET;
+const BASE_URL = config.SIGNIANT_API_URL;
 
 export class SigniantApiAuth {
   constructor() {
@@ -19,11 +18,14 @@ export class SigniantApiAuth {
   }
 
   static getInstance() {
-    return new SigniantApiAuth();
+    if (!SigniantApiAuth._instance) {
+      SigniantApiAuth._instance = new SigniantApiAuth();
+    }
+    return SigniantApiAuth._instance;
   }
 
   async getAccessToken() {
-    if (!this.accessToken || new Date() >= this.tokenExpiry) {
+    if (!this.accessToken || !this.tokenExpiry || new Date() >= this.tokenExpiry) {
       await this.refreshToken();
     }
     return this.accessToken;
@@ -79,8 +81,7 @@ SigniantApiAuth._instance = null;
 
 // Helper function to get combined headers for API calls
 export const getSigniantHeaders = async () => {
-  const headers = await SigniantApiAuth.getAuthHeader();
-  return headers;
+  return await SigniantApiAuth.getAuthHeader();
 };
 
 // Function to delete a job with required confirmation
@@ -130,8 +131,8 @@ export const updateJobTrigger = async (jobId) => {
       method: 'PATCH',
       headers,
       body: JSON.stringify({
-        paused: job.paused, // Preserve the paused state
-        actions: job.actions, // Preserve existing actions
+        paused: job.paused,
+        actions: job.actions,
         triggers: [{
           type: "HOT_FOLDER",
           events: [
@@ -141,7 +142,7 @@ export const updateJobTrigger = async (jobId) => {
             "hotFolder.signature.changed"
           ],
           data: {
-            source: job.actions[0].data.source // Use existing source data
+            source: job.actions[0].data.source
           }
         }]
       })
