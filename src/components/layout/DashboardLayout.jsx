@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { List, Home, Repeat, LogOut, Sun, Moon } from 'lucide-react';
+import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SigniantAuth } from '../../services/auth';
 import { useTheme } from '../ThemeProvider';
@@ -78,7 +78,8 @@ const DashboardLayout = ({ children }) => {
         <nav className="mt-6 flex flex-col justify-between h-[calc(100vh-100px)]">
           <div>
             <SidebarItem to="/transfers" icon={<Repeat size={20} />} text="Create New Transfers" />
-    
+            <SidebarItem to="/jobs" icon={<Briefcase size={20} />} text="Jobs" />
+            <SidebarItem to="/files" icon={<List size={20} />} text="File Monitor" />
             <SidebarItem to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
           </div>
           <div className="mb-6">

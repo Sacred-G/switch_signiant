@@ -12,11 +12,28 @@ interface TokenResponse {
 type HeadersInit = Record<string, string>;
 
 interface TransferProgress {
+  failed: {
+    bytes: number;
+    count: number;
+  };
+  skipped: {
+    bytes: number;
+    count: number;
+  };
   transferred: {
     bytes: number;
     count: number;
   };
   remaining: {
+    bytes: number;
+    count: number;
+  };
+}
+
+interface ObjectsManifest {
+  manifestId: string;
+  summary: {
+    bytes: number;
     count: number;
   };
 }
@@ -27,6 +44,7 @@ interface Transfer {
   currentRateBitsPerSecond: number;
   createdOn: string;
   transferProgress: TransferProgress;
+  objectsManifest?: ObjectsManifest;
 }
 
 interface TransferResponse {
@@ -54,6 +72,8 @@ interface TransferDetails {
   filesRemaining: number;
   totalResultCount: number;
   percentComplete: number;
+  objectsManifest?: ObjectsManifest;
+  transferProgress?: TransferProgress;
 }
 
 export class SigniantApiAuth {
@@ -228,6 +248,7 @@ export const getTransferDetails = async (jobId: string): Promise<TransferDetails
 
     const transfer = data.items[0];
     const progress = transfer.transferProgress;
+    const totalCount = progress.transferred.count + progress.remaining.count;
 
     return {
       transferId: transfer.transferId,
@@ -236,8 +257,10 @@ export const getTransferDetails = async (jobId: string): Promise<TransferDetails
       startTime: transfer.createdOn,
       bytesTransferred: progress.transferred.bytes,
       filesRemaining: progress.remaining.count,
-      totalResultCount: progress.transferred.count + progress.remaining.count,
-      percentComplete: progress.transferred.count / (progress.transferred.count + progress.remaining.count) * 100
+      totalResultCount: totalCount,
+      percentComplete: totalCount > 0 ? (progress.transferred.count / totalCount) * 100 : 0,
+      objectsManifest: transfer.objectsManifest,
+      transferProgress: progress
     };
   } catch (error) {
     console.error('Error fetching transfer details:', error);

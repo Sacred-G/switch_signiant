@@ -1,12 +1,10 @@
 {
+  "buildCommand": "npm run vercel-build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
   "framework": "vite",
-  "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "routes": [
-    {
-      "src": "/[^.]+",
-      "dest": "/",
-      "status": 200
-    }
-  ]
+  "env": {
+    "NODE_VERSION": "18"
+  }
 }

@@ -119,7 +119,7 @@ const App = () => {
             <Route index element={<Navigate to="/transfers" replace />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="transfers" element={<TransfersPage />} />
-            <Route path="monitor" element={<FileMonitor />} />
+            <Route path="files" element={<FileMonitor />} />
             <Route path="analytics" element={<AnalyticsPage />} />
           </Route>
         </Routes>

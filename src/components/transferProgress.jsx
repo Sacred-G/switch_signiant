@@ -1,6 +1,6 @@
 // src/components/transferProgress.jsx
 import React from 'react';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from './ui/progress';
 
 export const formatBytes = (bytes) => {
   if (bytes === 0) return '0 B';
@@ -40,7 +40,8 @@ export const calculateTimeRemaining = (startTime, percentComplete) => {
 export const TransferProgress = ({ 
   transferProgress, 
   transferStartedOn,
-  currentRateBitsPerSecond 
+  currentRateBitsPerSecond,
+  detailed = false
 }) => {
   const percentComplete = transferProgress?.percentComplete || 0;
   const timeRemaining = calculateTimeRemaining(transferStartedOn, percentComplete);
@@ -68,6 +69,40 @@ export const TransferProgress = ({
       <div className="text-sm text-gray-600 dark:text-gray-400">
         Estimated time remaining: {timeRemaining}
       </div>
+      {detailed && transferProgress?.objectsManifest && (
+        <div className="mt-4 space-y-2 border-t pt-4 dark:border-gray-700">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Files</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {transferProgress.objectsManifest.summary.count} files
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Size</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {formatBytes(transferProgress.objectsManifest.summary.bytes)}
+              </p>
+            </div>
+            {transferProgress.transferProgress && (
+              <>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Failed</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {transferProgress.transferProgress.failed.count} files ({formatBytes(transferProgress.transferProgress.failed.bytes)})
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Skipped</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {transferProgress.transferProgress.skipped.count} files ({formatBytes(transferProgress.transferProgress.skipped.bytes)})
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

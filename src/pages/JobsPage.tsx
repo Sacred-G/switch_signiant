@@ -35,12 +35,68 @@ interface DeleteConfirmationDialogProps {
   jobName?: string;
 }
 
+interface TransferProgressType {
+  percentComplete: number;
+  filesRemaining: number;
+  bytesTransferred: number;
+  objectsManifest?: {
+    manifestId: string;
+    summary: {
+      bytes: number;
+      count: number;
+    };
+  };
+  transferProgress?: {
+    failed: {
+      bytes: number;
+      count: number;
+    };
+    skipped: {
+      bytes: number;
+      count: number;
+    };
+    transferred: {
+      bytes: number;
+      count: number;
+    };
+    remaining: {
+      bytes: number;
+      count: number;
+    };
+  };
+}
+
 interface TransferDetailsType {
   percentComplete: number;
   filesRemaining: number;
   bytesTransferred: number;
   startTime: string;
   currentRateBitsPerSecond: number;
+  objectsManifest?: {
+    manifestId: string;
+    summary: {
+      bytes: number;
+      count: number;
+    };
+  };
+  transferProgress?: {
+    failed: {
+      bytes: number;
+      count: number;
+    };
+    skipped: {
+      bytes: number;
+      count: number;
+    };
+    transferred: {
+      bytes: number;
+      count: number;
+    };
+    remaining: {
+      bytes: number;
+      count: number;
+    };
+  };
 }
 
 interface Job {
@@ -49,18 +105,34 @@ interface Job {
     name: string;
     status: string;
     lastModifiedOn: string;
-    transferDetails: string | null;
-    activeAlerts: string | null;
+    transferDetails: TransferDetailsType | null;
+    activeAlerts: Array<{ type: string }> | null;
     actions: Array<{
       [x: string]: any;
       data: {
         source: {
           name: string;
+          url?: string;
         };
         destination: {
           name: string;
+          url?: string;
           config?: {
             path: string;
+          };
+        };
+        transferOptions?: {
+          areGrowingObjects: boolean;
+          growingObjects?: {
+            growingIdleTimeoutInSeconds: number;
+          };
+          partSizeInMiB?: number;
+        };
+        bandwidthManagement?: {
+          enabled: boolean;
+          maxRate?: {
+            value: number;
+            unit: string;
           };
         };
       };
@@ -308,11 +380,11 @@ const JobsPage: React.FC = () => {
     setExpandedRows(newExpandedRows);
   };
 
-  const getStatusVariant = (status: string, alerts: Array<{ type: string }> = []) => {
-    const hasCriticalAlert = alerts.some(alert => 
+  const getStatusVariant = (status: string, alerts: Array<{ type: string }> | null = null) => {
+    const hasCriticalAlert = alerts?.some(alert => 
       ['SOURCE_ENDPOINT_OFFLINE', 'DESTINATION_ENDPOINT_OFFLINE', 'IN_PROGRESS_TRANSFER_HAS_ERRORS']
       .includes(alert.type)
-    );
+    ) ?? false;
   
     if (hasCriticalAlert) return 'destructive';
   
@@ -531,10 +603,13 @@ const JobsPage: React.FC = () => {
                           transferProgress={{
                             percentComplete: job.transferDetails.percentComplete,
                             filesRemaining: job.transferDetails.filesRemaining,
-                            bytesTransferred: job.transferDetails.bytesTransferred
+                            bytesTransferred: job.transferDetails.bytesTransferred,
+                            objectsManifest: job.transferDetails.objectsManifest,
+                            transferProgress: job.transferDetails.transferProgress
                           }}
                           transferStartedOn={job.transferDetails.startTime}
                           currentRateBitsPerSecond={job.transferDetails.currentRateBitsPerSecond}
+                          detailed={isExpanded}
                         />
                       )}
                     </TableCell>
@@ -579,6 +654,11 @@ const JobsPage: React.FC = () => {
                                   <p className="text-sm text-gray-700 dark:text-gray-300">
                                     Name: {job.actions?.[0]?.data?.source?.name || 'N/A'}
                                   </p>
+                                  {job.actions?.[0]?.data?.source?.url && (
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 break-all">
+                                      Path: {job.actions[0].data.source.url}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -590,11 +670,51 @@ const JobsPage: React.FC = () => {
                                   <p className="text-sm text-gray-700 dark:text-gray-300">
                                     Name: {job.actions?.[0]?.data?.destination?.name || 'N/A'}
                                   </p>
+                                  {job.actions?.[0]?.data?.destination?.url && (
+                                    <p className="text-sm text-gray-700 dark:text-gray-300 break-all">
+                                      Path: {job.actions[0].data.destination.url}
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             </div>
 
                             <div className="col-span-2 mt-4">
+                              <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Transfer Options</p>
+                              <div className="grid grid-cols-2 gap-4 mt-2">
+                                <div>
+                                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                                    Growing Objects: {job.actions?.[0]?.data?.transferOptions?.areGrowingObjects ? 'Yes' : 'No'}
+                                  </p>
+                                  {job.actions?.[0]?.data?.transferOptions?.growingObjects && (
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                      Idle Timeout: {job.actions[0].data.transferOptions.growingObjects.growingIdleTimeoutInSeconds}s
+                                    </p>
+                                  )}
+                                  {job.actions?.[0]?.data?.transferOptions?.partSizeInMiB && (
+                                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                                      Part Size: {job.actions[0].data.transferOptions.partSizeInMiB} MiB
+                                    </p>
+                                  )}
+                                </div>
+                                <div>
+                                  {job.actions?.[0]?.data?.bandwidthManagement?.enabled && (
+                                    <>
+                                      <p className="text-sm text-gray-700 dark:text-gray-300">
+                                        Bandwidth Management: Enabled
+                                      </p>
+                                      {job.actions[0].data.bandwidthManagement.maxRate && (
+                                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                                          Max Rate: {job.actions[0].data.bandwidthManagement.maxRate.value} {job.actions[0].data.bandwidthManagement.maxRate.unit}
+                                        </p>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="col-span-2">
                               <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Job Information</p>
                               <div className="grid grid-cols-2 gap-4 mt-2">
                                 <div>
@@ -608,15 +728,6 @@ const JobsPage: React.FC = () => {
                                 </div>
                               </div>
                             </div>
-
-                            {job.actions?.[0]?.data?.destination?.config?.path && (
-                              <div className="col-span-2">
-                                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Path</p>
-                                <p className="text-sm text-gray-700 dark:text-gray-300 break-all bg-white dark:bg-gray-700 p-2 rounded border border-blue-100 dark:border-blue-900">
-                                  {job.actions[0].data.destination.config.path}
-                                </p>
-                              </div>
-                            )}
                           </div>
                         </div>
                       </TableCell>
