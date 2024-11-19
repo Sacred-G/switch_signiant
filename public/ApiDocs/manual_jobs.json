@@ -1,0 +1,92 @@
+Manual Jobs
+
+Manual jobs do not start automatically and must be created and started by using the Jet management console or the /jobs and /deliveries API endpoints.
+
+Note: Sending API requests to the /deliveries API endpoint on a paused job will return a 400 error. Paused jobs cannot be started using /deliveries requests.
+Creating a Manual Job
+
+Before creating a manual job via the API, ensure you have a valid authorization token.
+
+    Send a GET request to /v1/storageProfiles to retrieve a list of storage profiles.
+    Copy
+
+     > curl -X GET -H "Authorization: Bearer <token>" -H "Content-Type: application/json" https://platform-api-service.services.cloud.signiant.com/v1/storageProfiles
+
+    Using the response body, determine the storageProfileId of the source and destination storage profiles.
+
+    Create a request body including the storageProfileId values for the source and destination endpoints in the request body actions array:
+    Copy
+
+    {
+      "name": "Manual Job",
+      "actions": [
+        {
+          "type": "TRANSFER",
+          "data": {
+            "source": {
+              "storageProfileId": "11111111-12345-abccd-12345"
+            },
+            "destination": {
+              "storageProfileId": "11111111-12345-abccd-54321"
+            }
+          }
+        }
+      ]
+    }
+
+    Send the request body to the /v1/jobs API endpoint to create the job. A valid response includes the jobId required to transfer files.
+
+Transferring Files
+
+Once the job has been created, use the /jobs/{jobId}/deliveries API endpoint to specify the relative path to the files included in the job.
+
+To transfer files using a manual job:
+
+    Send a GET request to /v1/jobs to retrieve a list of your jobs.
+
+    Using the response body, determine the jobId of the manual job.
+
+    Prepare a request body that specifies to transfer all storage profile contents or specific files.
+
+    Send the request body to the /v1/jobs/{jobId}/deliveries API endpoint.
+
+Once the request is accepted, the /deliveries API endpoint responds with the file list, and the transfer begins immediately.
+Transferring All Profile Contents
+
+To send all files in a Storage Profile, set the relative path to the storage profile root, and set the isDirectory property to true:
+Copy
+
+{
+  "objects": [
+    {
+      "relativePath": "/",
+      "isDirectory": true
+    }
+  ]
+}
+
+Transferring Selected Files
+
+The request body sent to the API endpoint must include the full relative path to each individual file to be transferred. Each file path is relative to the root of the storage profile location, and can include files in subfolders, or entire folders by setting the relativePath to the desired directory, and setting the isDirectory to true.
+Copy
+
+{
+  "objects": [
+    {
+      "relativePath": "/example.mp4",
+      "sizeInBytes": 104857600
+    },
+    {
+      "relativePath": "/path/to/example2.mp4",
+      "sizeInBytes": 104857600
+    },
+    {
+      "relativePath": "/path/to/folder",
+      "isDirectory": true
+    }
+  ]
+}
+
+Files contained in subfolders on the source endpoint transfer to a new subfolder created on the destination endpoint.
+
+Note: Including the file size for each file allows estimated completion status on the Jobs page in the Jet management console. Folders transferred as part of a manual job do not require the sizeInBytes property.

@@ -13,7 +13,7 @@ import {
 } from '../components/ui/select';
 import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
-import { getSigniantHeaders } from '../lib/signiant';
+import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
 
 // ... (keeping formatDate function unchanged)
 const formatDate = (dateString) => {
@@ -62,7 +62,7 @@ const TransferManager = () => {
   const [isGrowingObjects, setIsGrowingObjects] = useState(false);
   const { toast } = useToast();
 
-  // ... (keeping fetchProfiles and fetchData functions unchanged)
+  // ... (keeping fetchProfiles unchanged)
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
@@ -148,21 +148,20 @@ const TransferManager = () => {
     fetchData();
   }, []);
 
-  const handleJobAction = async (jobId, action) => {
+  const handleJobAction = async (jobId, action, triggers) => {
     try {
-      const headers = await getSigniantHeaders();
-      await fetch(
-        `https://platform-api-service.services.cloud.signiant.com/v1/jobs/${jobId}`,
-        {
-          method: 'PATCH',
-          headers,
-          body: JSON.stringify({ paused: action === "PAUSE" })
-        }
-      );
+      if (action === "START") {
+        // For READY state jobs, use startManualJob
+        await startManualJob(jobId);
+      } else if (action === "PAUSE") {
+        await pauseJob(jobId);
+      } else if (action === "RESUME") {
+        await resumeJob(jobId);
+      }
       
       toast({
         title: "Success",
-        description: `Job ${action.toLowerCase()}d successfully`
+        description: `Job ${action.toLowerCase()}ed successfully`
       });
       
       fetchData();
@@ -508,17 +507,21 @@ const TransferManager = () => {
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      onClick={() => handleJobAction(transfer.jobId, "PAUSE")}
+                      onClick={() => handleJobAction(transfer.jobId, "PAUSE", transfer.triggers)}
                       className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       <Pause className="h-4 w-4" />
                     </Button>
                   )}
-                  {transfer.status === "PAUSED" && (
+                  {(transfer.status === "PAUSED" || transfer.status === "READY") && (
                     <Button 
                       size="sm" 
                       variant="outline"
-                      onClick={() => handleJobAction(transfer.jobId, "RESUME")}
+                      onClick={() => handleJobAction(
+                        transfer.jobId, 
+                        transfer.status === "READY" ? "START" : "RESUME",
+                        transfer.triggers
+                      )}
                       className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
                     >
                       <Play className="h-4 w-4" />

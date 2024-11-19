@@ -1,0 +1,166 @@
+Advanced Job Configuration
+
+Signiant Jet provides the ability to configure jobs to manage bandwidth allocation, work with growing files, and use file filtering to include and exclude specific files. Jobs created through the API allow integrations to set configuration options when creating or updating a job.
+
+For more information about enabling advanced job configuration in the Signiant Console, see the Signiant Help Center.
+Bandwidth Management
+
+Job bandwidth management allows you to limit the job's bandwidth consumption and provide additional bandwidth for other network activity. Bandwidth management can be scheduled during specific time periods. To enable bandwidth management on a job, include the bandwidthManagement object and required values in the actions array of the /v1/jobs endpoint.
+Example Request Body - Limiting A Job
+
+The following example request body creates a job that uses a maximum bandwidth allocation of 400 Mbps, without a specified schedule:
+Copy
+
+{
+  "name": "Job with Bandwidth Controls",
+  "actions": [
+    {
+      "type": "TRANSFER",
+      "data": {
+        "source": {
+          "storageProfileId": "11111111-1234-abcd-dcba-123456123456"
+        },
+        "destination": {
+          "storageProfileId": "22222222-1234-abcd-dcba-123456123456"
+        },
+        "bandwidthManagement": {
+          "enabled": true,
+          "maxRate": {
+            "value": 400,
+            "unit": "Mbps"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Bandwidth Management Scheduling
+
+Bandwidth management can be defined using the iCalendar RFC format, which supports recurring events. The iCalendar standard permits a set start and stop time within a specified time zone, and supports recurring events using an RRULE to set date, time, and frequency associated with the bandwidth controls. For more information about the iCalendar standard, see the iCalendar Organization Website.
+
+The following example scheduling configuration starts limiting bandwidth between 9:00 AM Eastern to 5:00 PM Eastern, Monday through Friday:
+Copy
+
+DTSTART;TZID=America/New_York:20211001T090000\\nDTEND;TZID=America/New_York:20211001T170000\\nRRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+
+Example Argument 	Description
+DTSTART 	The recurrence start
+TZID=America/New_York 	The time zone to start or end limiting bandwidth. A complete list of Time Zone names is available from the IANA Database.
+20240131 	The date to start or end, in YYYYMMDD format
+T090000 	The start or end time in 24 hour format
+DTEND 	The recurrence end
+RRULE 	The recurrence rule
+FREQ=WEEKLY 	The repeat frequency of the rule. Additional examples can be found in the iCalendar Organization Documentation.
+BYDAY=MO,TU,WE,TH,FR 	The days of the week the rule takes effect
+\\n 	Escaped newline character. An escaped newline (\n) character is required as a separator between all DTSTART, DTEND, and RRULE values.
+
+Note: DSTART must be a minimum of 5 minutes from the time the schedule is set.
+Example Request Body - Bandwidth Management With Scheduling
+
+The following example request body creates a job that uses a maximum bandwidth allocation of 400 Mbps, from 9:00 AM to 5:00 PM in the eastern time zone, repeating every week, Monday to Friday:
+Copy
+
+{
+  "name": "Job with Scheduled Bandwidth Controls",
+  "actions": [
+    {
+      "type": "TRANSFER",
+      "data": {
+        "source": {
+          "storageProfileId": "11111111-1234-abcd-dcba-123456123456"
+        },
+        "destination": {
+          "storageProfileId": "22222222-1234-abcd-dcba-123456123456"
+        },
+        "bandwidthManagement": {
+          "enabled": true,
+          "maxRate": {
+            "value": 400,
+            "unit": "Mbps"
+          },
+          "scheduling": {
+            "enabled": true,
+            "items": [
+              {
+                "rrule": "DTSTART;TZID=America/New_York:20211001T090000\\nDTEND;TZID=America/New_York:20211001T170000\\nRRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer Options
+
+Jobs can be configured with one or more transfer options to allow growing file transfers (e.g. a file still being written to disk) and to filter files in a source directory to include or exclude specific files in a transfer.
+Growing Files
+
+Jobs configured to support growing file transfers are available for Jet customers with an Enterprise subscription. When creating a job via the API, your organization can enable the job to handle files growing in size from an on-premises SDCX Server. This allows Jet to transfer content as it is being created, or during a separate transfer in progress. Growing file support requires SDCX Server version 5.4.0 or higher.
+Example Request Body - Growing Files
+
+The following example request body creates a job to use growing objects. This request includes the optional growingIdleTimeoutInSeconds and partSizeInMiB arguments:
+Copy
+
+{
+  "name": "Job with growing objects enabled",
+  "actions": [
+    {
+      "type": "TRANSFER",
+      "data": {
+        "source": {
+          "storageProfileId": "11111111-1234-abcd-dcba-123456123456"
+        },
+        "destination": {
+          "storageProfileId": "22222222-1234-abcd-dcba-123456123456"
+        },
+        "transferOptions": {
+          "areGrowingObjects": true,
+          "growingObjects": {
+            "growingIdleTimeoutInSeconds": 30
+          },
+          "partSizeInMiB": 10
+        }
+      }
+    }
+  ]
+}
+
+The growingIdleTimeoutInSeconds option configures the number of seconds to wait for a file to stop growing before it is marked as complete. The default value is 30 seconds.
+
+The partSizeInMiB option sets the size in mebibytes of the individual file segments to send. Once a file segment is sent, it is added to the end of the file on the destination server.
+File Filtering
+
+Your organization may want to filter the files and folders that are being transferred as part of a job. You can enter the exact path to include or exclude a specific file or folder, or use glob patterns to include or exclude groups of files or folders. For more information about using file filters, see the Signiant Help Center.
+
+Note: File filtering currently supports on-premises and AWS S3 Standard storage as source storage profiles.
+Example Request Body - File Filtering
+
+The following example request body creates a job to use file filtering. The filter will include all .png files from the current folder and all subfolders, except the .png files within the example directory:
+Copy
+
+{
+  "name": "Job with file filtering enabled",
+  "actions": [
+    {
+      "type": "TRANSFER",
+      "data": {
+        "source": {
+          "storageProfileId": "11111111-1234-abcd-dcba-123456123456"
+        },
+        "destination": {
+          "storageProfileId": "22222222-1234-abcd-dcba-123456123456"
+        },
+        "transferOptions": {
+          "objectPatterns": {
+            "inclusions": ["**/*.png"],
+            "exclusions": ["**/example/*.png"],
+            "type": "GLOB"
+          }
+        }
+      }
+    }
+  ]
+}

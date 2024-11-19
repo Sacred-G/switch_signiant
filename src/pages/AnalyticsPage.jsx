@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SigniantApiAuth, pauseFolder, startFolder } from '../lib/signiant';
+import { SigniantApiAuth, pauseJob, resumeJob, startManualJob } from '../lib/signiant';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
@@ -20,7 +20,8 @@ import {
   Play,
   Network,
   FileWarning,
-  Trash
+  Trash,
+  PlayCircle
 } from 'lucide-react';
 
 const AnalyticsPage = () => {
@@ -42,7 +43,6 @@ const AnalyticsPage = () => {
 
       if (!response.ok) throw new Error('Failed to fetch transfer');
       const data = await response.json();
-      // Get the most recent transfer
       return data.items[0];
     } catch (error) {
       console.error(`Failed to fetch transfer for job ${jobId}:`, error);
@@ -130,20 +130,20 @@ const AnalyticsPage = () => {
     }).format(date);
   };
 
-  const handlePauseFolder = async (jobId) => {
+  const handlePauseJob = async (jobId) => {
     setActionLoading(true);
     try {
-      await pauseFolder(jobId);
+      await pauseJob(jobId);
       toast({
         title: "Success",
-        description: "Folder paused successfully",
+        description: "Job paused successfully",
       });
       fetchJobs();
     } catch (error) {
-      console.error('Error pausing folder:', error);
+      console.error('Error pausing job:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to pause folder",
+        description: error.message || "Failed to pause job",
         variant: "destructive",
       });
     } finally {
@@ -151,20 +151,41 @@ const AnalyticsPage = () => {
     }
   };
 
-  const handleStartFolder = async (jobId) => {
+  const handleResumeJob = async (jobId) => {
     setActionLoading(true);
     try {
-      await startFolder(jobId);
+      await resumeJob(jobId);
       toast({
         title: "Success",
-        description: "Folder started successfully",
+        description: "Job resumed successfully",
       });
       fetchJobs();
     } catch (error) {
-      console.error('Error starting folder:', error);
+      console.error('Error resuming job:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to start folder",
+        description: error.message || "Failed to resume job",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartJob = async (jobId) => {
+    setActionLoading(true);
+    try {
+      await startManualJob(jobId);
+      toast({
+        title: "Success",
+        description: "Job started successfully",
+      });
+      fetchJobs();
+    } catch (error) {
+      console.error('Error starting job:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to start job",
         variant: "destructive",
       });
     } finally {
@@ -323,6 +344,9 @@ const AnalyticsPage = () => {
                 const transferProgress = formatTransferProgress(transfer);
                 const size = getTransferSize(transfer);
                 const fileCount = getTransferFileCount(transfer);
+                const isPaused = job.status === 'PAUSED';
+                const isInProgress = job.status === 'IN_PROGRESS';
+                const canStart = job.status === 'READY' || isPaused;
                 
                 return (
                   <TableRow key={job.jobId} className="dark:border-gray-700 dark:hover:bg-gray-700/50">
@@ -373,37 +397,26 @@ const AnalyticsPage = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        {job.status === 'READY' && (
+                        {canStart && (
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handleStartFolder(job.jobId)}
+                            onClick={() => isPaused ? handleResumeJob(job.jobId) : handleStartJob(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                             disabled={actionLoading}
                           >
-                            <Play className="w-4 h-4" />
+                            {isPaused ? <PlayCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
                           </Button>
                         )}
-                        {job.status === 'IN_PROGRESS' && (
+                        {isInProgress && (
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => handlePauseFolder(job.jobId)}
+                            onClick={() => handlePauseJob(job.jobId)}
                             className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                             disabled={actionLoading}
                           >
                             <Pause className="w-4 h-4" />
-                          </Button>
-                        )}
-                        {job.status === 'PAUSED' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handleStartFolder(job.jobId)}
-                            className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading}
-                          >
-                            <Play className="w-4 h-4" />
                           </Button>
                         )}
                         <Button 
@@ -411,7 +424,7 @@ const AnalyticsPage = () => {
                           variant="outline"
                           onClick={() => handleDeleteJob(job.jobId)}
                           className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                          disabled={actionLoading}
+                          disabled={actionLoading || isInProgress}
                         >
                           <Trash className="w-4 h-4" />
                         </Button>

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { SigniantAuth } from '../lib/signiant';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { TransferProgress } from './transferProgress';
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from '../components/ui/use-toast';
 import { RefreshCw, Search, AlertTriangle, CheckCircle2, Clock, AlertCircle, Pause, Play } from 'lucide-react';
+import { pauseJob, resumeJob } from '../lib/signiant';
 
 const TransferDashboard = () => {
   const [transfers, setTransfers] = useState([]);
@@ -73,19 +74,19 @@ const TransferDashboard = () => {
 
   const handleJobAction = async (jobId, action) => {
     try {
-      const headers = await SigniantAuth.getAuthHeader();
-      await fetch(`/platform-api/v1/jobs/${jobId}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({ status: action })
-      });
+      if (action === 'PAUSE') {
+        await pauseJob(jobId);
+      } else if (action === 'RESUME') {
+        await resumeJob(jobId);
+      }
       
       toast({
         title: "Success",
-        description: `Job ${action.toLowerCase()} successfully`
+        description: `Job ${action.toLowerCase()}d successfully`
       });
       
-      fetchTransfers();
+      // Fetch transfers after a short delay to allow the API to update
+      setTimeout(fetchTransfers, 1000);
     } catch (error) {
       toast({
         title: "Error",

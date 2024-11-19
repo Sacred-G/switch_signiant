@@ -1,0 +1,390 @@
+Working With Jet Event Webhooks
+
+Signiant Jet provides notifications for Jet activity using webhooks. Once an account enables webhook notifications for an event category or specific event type using the /subscriptions endpoint, you can receive event notifications as JSON webhooks.
+Enabling Webhooks
+
+Jet notification subscriptions are categorized into event categories. Currently, webhook notifications can be enabled for:
+
+    Transfer events
+    Delivery events
+    Storage profile events
+    Job events
+    Endpoint events
+
+Transfer Events
+
+Hot Folder jobs begin once a file is added to a hot folder, creating a JET_TRANSFER event which can be reported via webhook. To enable webhook notifications for all transfer events, send a request to the /subscriptions API endpoint including a request body that sets the webhook eventCategory to JET_TRANSFER.
+
+Transfer webhooks include the following events:
+
+    The transfer is queued
+    The transfer is in progress
+    The transfer is completed
+    The transfer is canceled
+    The transfer failed
+
+Transfer Retries
+
+When a hot folder job fails, it automatically retries. A transfer event webhook will report any retries as part of the webhook by displaying isRetry as true or false. A retryInfo object included in the webhook indicates the number of attempts, via the retryNumber key-value pair.
+Transfer Webhook Aggregation
+
+Transfer notifications for Hot Folder jobs can be aggregated by including an aggregationConfig in the notificationConfig object. The aggregationConfig accepts an aggregationWindowInSeconds parameter to set the aggregation period for notifications.
+
+When a transfer completes, a webhook is sent to the destination URL at the end of the selected notification period. Any additional transfers that complete during that period are included in the same webhook body.
+Console Option 	Time In Seconds
+Every 10 Minutes 	600
+Every 30 Minutes 	1800
+Every Hour 	3600
+Every Day 	86400
+
+To receive notifications for every transfer, do not include the aggregationConfig object.
+Example Request Body (All Transfer Events)
+Copy
+
+{
+  "eventCategory": "JET_TRANSFER",
+  "eventFilterConfig": {
+    "jobId": "12345678-1234-abcd-abcd-abcdef123456"
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url",
+    "aggregationConfig": {
+      "aggregationWindowInSeconds": 1800
+    }
+  }
+}
+
+Example Response (All Transfer Events)
+Copy
+
+{
+  "accountId": "12345678-1234-abcd-abcd-abcdef123456",
+  "createdOn": "2021-01-14T15:45:50.874Z",
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "lastModifiedOn": "2021-01-14T15:45:50.874Z",
+  "eventCategory": "JET_TRANSFER",
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  },
+  "eventFilterConfig": {
+    "jobId": "12345678-1234-abcd-abcd-abcdef123456"
+  }
+}
+
+Delivery Events
+
+Delivery events occur when a job is using a schedule or manual trigger. Jobs with a schedule trigger create a new delivery at their scheduled start time. Manual jobs create a delivery when started through the Signiant Console or Jet API.
+
+Once the delivery is created, the associated transfer starts as soon as possible.
+
+The delivery lifecycle consists of the following:
+
+    A job is started at the scheduled start time or manually, which creates a new delivery.
+    The system determines which files to queue for the delivery.
+    Files are added to the overall job schedule.
+    The job schedule determines when the system can start transferring files.
+    Files transfer from the source to the destination.
+    The delivery completes.
+
+Delivery webhooks include the following events:
+
+    The delivery is created
+    The delivery is queued
+    The delivery is scheduled and about to start
+    The delivery is in progress
+    The delivery is completed
+    The delivery failed
+
+Note: A delivery consisting of a large number of files will transfer in batches, resulting in more than one QUEUED, SCHEDULED, and IN_PROGRESS event per delivery.
+
+To enable webhook notifications for delivery events, send a request to the /subscriptions API endpoint including a request body that sets the webhook eventCategory as JET_DELIVERY.
+Example Request Body (All Delivery Events)
+Copy
+
+{
+  "eventCategory": "JET_DELIVERY",
+  "eventFilterConfig": {
+    "jobId": "12345678-1234-abcd-abcd-abcdef123456"
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Response (All Delivery Events)
+Copy
+
+{
+  "events": [
+    {
+      "accountId": "12345678-1234-abcd-abcd-abcdef123456",
+      "createdOn": "2021-01-14T15:45:50.874Z",
+      "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+      "lastModifiedOn": "2021-01-14T15:45:50.874Z",
+      "eventCategory": "JET_DELIVERY",
+      "notificationMethod": "WEBHOOK",
+      "notificationConfig": {
+        "url": "https://example.com/receiving/url"
+      },
+      "eventFilterConfig": {
+        "jobId": "12345678-1234-abcd-abcd-abcdef123456"
+      }
+    }
+  ]
+}
+
+Storage Profile Events
+
+Storage profile activity webhooks are sent when a new storage profile is created or a storage profile is deleted.
+
+To enable webhook notifications for storage profile events, send a request to the /subscriptions API endpoint including a request body that sets the webhook eventCategory as STORAGE_PROFILE.
+Example Request Body (All Storage Profile Events)
+Copy
+
+{
+  "eventCategory": "STORAGE_PROFILE",
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Response (All Storage Profile Events)
+Copy
+
+{
+  "accountId": "c3c7ce48-1412-46e7-8884-634ea45bd12c",
+  "createdOn": "2021-02-17T18:58:03.717Z",
+  "eventCategory": "STORAGE_PROFILE",
+  "lastModifiedOn": "2021-02-17T18:58:03.717Z",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  },
+  "notificationMethod": "WEBHOOK",
+  "subscriptionId": "b4796f78-4054-4e91-9793-d01a38da80cd"
+}
+
+Job Events
+
+Transfer jobs include the following events:
+
+    A job is created
+    A job is deleted
+    A job is paused
+    A job is resumed
+
+To enable webhook notifications for job events, send a request to the /subscriptions API endpoint including a request body that sets the webhook eventCategory as JET_JOB.
+Example Request (All Job Events)
+Copy
+
+{
+  "eventCategory": "JET_JOB",
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Response (All Job Events)
+Copy
+
+{
+  "accountId": "c3c7ce48-1412-46e7-8884-634ea45bd12c",
+  "createdOn": "2021-02-17T20:02:54.499Z",
+  "eventCategory": "JET_JOB",
+  "lastModifiedOn": "2021-02-17T20:02:54.499Z",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  },
+  "notificationMethod": "WEBHOOK",
+  "subscriptionId": "daf7175d-aac4-4d5e-bbfc-b437f0e32801"
+}
+
+Endpoint Events
+
+Endpoints send webhooks for the following events:
+
+    An endpoint is created
+    An endpoint is deleted
+    An endpoint becomes online
+    An endpoint becomes offline
+    An endpoint name or location is modified
+
+To enable webhook notifications for endpoint events, send a request to the /subscriptions API endpoint including a request body that sets the webhook eventCategory as ENDPOINT.
+
+Note: Modifying an endpoint name or location includes a modifications object to include any changes made to the endpoint. For more information, see event examples for modified endpoints.
+Example Request Body (All Endpoint Events)
+Copy
+
+{
+  "eventCategory": "ENDPOINT",
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Response (All Endpoint Events)
+Copy
+
+{
+  "accountId": "c3c7ce48-1412-46e7-8884-634ea45bd12c",
+  "createdOn": "2021-02-17T20:02:54.499Z",
+  "eventCategory": "ENDPOINT",
+  "lastModifiedOn": "2021-02-17T20:02:54.499Z",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  },
+  "notificationMethod": "WEBHOOK",
+  "subscriptionId": "daf7175d-aac4-4d5e-bbfc-b437f0e32801"
+}
+
+Enabling Webhooks For Specific Events
+
+To enable webhook notifications for specific events, send a request to the /subscriptions API endpoint including a request body that includes the eventTypes array with the events you wish to receive.
+Notification 	Event Type
+	
+A transfer is queued 	com.signiant.jet.transfer.queued
+A transfer is in progress 	com.signiant.jet.transfer.inProgress
+A transfer is completed 	com.signiant.jet.transfer.completed
+A user paused the transfer 	com.signiant.jet.transfer.canceled
+A transfer failed 	com.signiant.jet.transfer.failed
+	
+	
+	
+A storage profile is created 	com.signiant.storageProfile.created
+A storage profile is deleted 	com.signiant.storageProfile.deleted
+	
+	
+	
+A new job is created 	com.signiant.jet.job.created
+A user paused the job 	com.signiant.jet.job.paused
+A user resumed the job 	com.signiant.jet.job.resumed
+A user deleted the job 	com.signiant.jet.job.deleted
+	
+	
+	
+An endpoint is created 	com.signiant.endpoint.created
+An endpoint is deleted 	com.signiant.endpoint.deleted
+An endpoint becomes online 	com.signiant.endpoint.online
+An endpoint becomes offline 	com.signiant.endpoint.offline
+An endpoint name or location is modified 	com.signiant.endpoint.modified
+	
+	
+	
+The delivery is created 	com.signiant.jet.delivery.created
+The delivery is queued 	com.signiant.jet.delivery.queued
+The delivery is scheduled 	com.signiant.jet.delivery.scheduled
+The delivery is in progress 	com.signiant.jet.delivery.inProgress
+The delivery is completed 	com.signiant.jet.delivery.completed
+The delivery failed 	com.signiant.jet.delivery.failed
+
+Note: Requests with eventTypes must include the appropriate eventCategory.
+Example Request Body (Transfer Start and Finish)
+Copy
+
+{
+  "eventCategory": "JET_TRANSFER",
+  "eventFilterConfig": {
+    "jobId": "12345678-1234-abcd-abcd-abcdef123456",
+    "eventTypes": [
+      "com.signiant.jet.transfer.inProgress",
+      "com.signiant.jet.transfer.completed"
+    ]
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Request Body (Storage Profile Deleted)
+Copy
+
+{
+  "eventCategory": "STORAGE_PROFILE",
+  "eventFilterConfig": {
+    "eventTypes": ["com.signiant.storageProfile.deleted"]
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Request Body (Job Paused and Resumed)
+Copy
+
+{
+  "eventCategory": "JET_JOB",
+  "eventFilterConfig": {
+    "eventTypes": [
+      "com.signiant.jet.job.paused",
+      "com.signiant.jet.job.resumed"
+    ]
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Request Body (Endpoint Created)
+Copy
+
+{
+  "eventCategory": "ENDPOINT",
+  "eventFilterConfig": {
+    "eventTypes": ["com.signiant.endpoint.created"]
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Example Request Body (Delivery Start and Finish)
+Copy
+
+{
+  "eventCategory": "JET_DELIVERY",
+  "eventFilterConfig": {
+    "jobId": "12345678-1234-abcd-abcd-abcdef123456",
+    "eventTypes": [
+      "com.signiant.jet.delivery.scheduled",
+      "com.signiant.jet.delivery.completed"
+    ]
+  },
+  "notificationMethod": "WEBHOOK",
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url"
+  }
+}
+
+Webhook Security
+
+Exposing your application in order to receive webhooks includes a risk to data integrity in your application. To reduce the risk of your application receiving invalid data, secure your webhook endpoint by including query parameters to the notification URL. Adding a query parameter ensures that only Signiant can send data to your application using requests that include a valid access token or shared secret.
+
+When making your initial request to enable webhook notifications, include a query paramater to specify a shared secret or access token:
+Copy
+
+...
+  "notificationConfig": {
+    "url": "https://example.com/receiving/url?shared_secret=Fm_w.fb5cafg-4.1JSj"
+  }
+...
+
+By including a query parameter, the overall risk is reduced, as the access to your application or server is restricted to incoming requests that include the specified access token.
+Receiving Webhooks
+
+Once a subscription is activated, webhooks will be sent to the destination URL and contain a request body with information about the event.
+
+Note: For transfer events, you can retrieve a transfer summary via the /v1/jobs/{jobId}/transfers/{transferId} endpoint once the transfer completes.
+
+For examples of webhook response bodies, see Jet Event Examples.
+Disabling Webhook Subscriptions
+
+To disable webhook notifications, send a DELETE request to the /subscriptions/{subscriptionId}. A webhook's subscriptionId is displayed when subscribing to notifications, or via GET, which displays a list of current subscriptions and their corresponding attributes.

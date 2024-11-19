@@ -196,6 +196,162 @@ export const getTransferDetails = async (jobId) => {
   }
 };
 
+// Function to pause a job
+export const pauseJob = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the current job to preserve other settings
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Update the job to set paused state while preserving all other settings
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: true,
+        actions: job.actions,
+        triggers: job.triggers,
+        name: job.name,
+        // Include any transfer options if they exist
+        ...(job.actions[0]?.data?.transferOptions && {
+          transferOptions: job.actions[0].data.transferOptions
+        })
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to pause job: ${errorText}`);
+    }
+
+    // Verify the job was paused
+    const verifyResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+    
+    if (!verifyResponse.ok) {
+      throw new Error('Failed to verify job pause status');
+    }
+
+    const verifiedJob = await verifyResponse.json();
+    if (!verifiedJob.paused) {
+      throw new Error('Job pause operation did not take effect');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error pausing job:', error);
+    throw error;
+  }
+};
+
+// Function to resume a job
+export const resumeJob = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the current job to preserve other settings
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Update the job to unset paused state while preserving all other settings
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: false,
+        actions: job.actions,
+        triggers: job.triggers,
+        name: job.name,
+        // Include any transfer options if they exist
+        ...(job.actions[0]?.data?.transferOptions && {
+          transferOptions: job.actions[0].data.transferOptions
+        })
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to resume job: ${errorText}`);
+    }
+
+    // Verify the job was resumed
+    const verifyResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+    
+    if (!verifyResponse.ok) {
+      throw new Error('Failed to verify job resume status');
+    }
+
+    const verifiedJob = await verifyResponse.json();
+    if (verifiedJob.paused) {
+      throw new Error('Job resume operation did not take effect');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error resuming job:', error);
+    throw error;
+  }
+};
+
+// Function to start a manual job
+export const startManualJob = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    
+    // First get the job details to get the source path
+    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      headers
+    });
+
+    if (!getResponse.ok) {
+      throw new Error('Failed to fetch job details');
+    }
+
+    const job = await getResponse.json();
+    
+    // Create a delivery request to start the job
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}/deliveries`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        objects: [{
+          relativePath: "/",
+          isDirectory: true
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to start manual job: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error starting manual job:', error);
+    throw error;
+  }
+};
+
 // Function to pause a folder (change from HOT_FOLDER to MANUAL)
 export const pauseFolder = async (jobId) => {
   try {

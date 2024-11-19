@@ -1,0 +1,675 @@
+
+Jet Event Examples
+Transfer Events
+Transfer Queued
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:24:38.383Z",
+      "type": "com.signiant.jet.transfer.queued",
+      "source": "/transfers/7a3a5d12-74a1-4205-be78-9d6a03a2429f",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "7a3a5d12-74a1-4205-be78-9d6a03a2429f",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "executionId": "aabbccdd-531f-4c51-b254-ffeedd332211",
+          "state": "SCHEDULED",
+          "lastModifiedOn": "2021-02-17T18:24:37.883Z",
+          "createdOn": "2021-02-17T18:24:37.883Z",
+          "isRetry": false,
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer In Progress
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:24:41.252Z",
+      "type": "com.signiant.jet.transfer.inProgress",
+      "source": "/transfers/7a3a5d12-74a1-4205-be78-9d6a03a2429f",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "7a3a5d12-74a1-4205-be78-9d6a03a2429f",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "executionId": "aabbccdd-531f-4c51-b254-ffeedd332211",
+          "state": "IN_PROGRESS",
+          "lastStateChangeOn": "2021-02-17T18:24:39.241755531Z",
+          "lastModifiedOn": "2021-02-17T18:24:40.767Z",
+          "createdOn": "2021-02-17T18:24:37.883Z",
+          "isRetry": false,
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer Completed
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:26:39.344Z",
+      "type": "com.signiant.jet.transfer.completed",
+      "source": "/transfers/90ab2ed0-12f3-4cc9-8b9c-7047d6e36317",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "90ab2ed0-12f3-4cc9-8b9c-7047d6e36317",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "executionId": "aabbccdd-531f-4c51-b254-ffeedd332211",
+          "state": "COMPLETED",
+          "lastStateChangeOn": "2021-02-17T18:26:38.453473915Z",
+          "lastModifiedOn": "2021-02-17T18:26:38.851Z",
+          "createdOn": "2021-02-17T18:25:40.982Z",
+          "isRetry": false,
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer Completed with Retries
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:26:39.344Z",
+      "type": "com.signiant.jet.transfer.completed",
+      "source": "/transfers/90ab2ed0-12f3-4cc9-8b9c-7047d6e36317",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "90ab2ed0-12f3-4cc9-8b9c-7047d6e36317",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "executionId": "aabbccdd-531f-4c51-b254-ffeedd332211",
+          "state": "COMPLETED",
+          "lastStateChangeOn": "2021-02-17T18:26:38.453473915Z",
+          "lastModifiedOn": "2021-02-17T18:26:38.851Z",
+          "createdOn": "2021-02-17T18:25:40.982Z",
+          "isRetry": true,
+          "retryInfo": {
+            "retryNumber": 1
+          },
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer Completed with Aggregated Events
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "specversion": "1.0",
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-07-02T16:18:43.206Z",
+      "source": "/transfers/5289f3fc-2e07-4153-814f-abec32798917",
+      "type": "com.signiant.jet.transfer.completed",
+      "data": {
+        "transfer": {
+          "jobId": "0295093b-b7d7-445b-867b-95a6dfaea3d4",
+          "executionId": "aa90a0d7-2baa-4b58-99f8-123456abcdef",
+          "lastStateChangeOn": "2021-07-02T16:18:40.236741504Z",
+          "destination": {
+            "accountId": "356fb849-037e-4a59-8536-123456abcdef",
+            "serviceId": "b24547d3-32fc-4a26-a06a-123456abcdef",
+            "deviceId": "43dd9fd1-b24b-4b4a-ae2a-123456abcdef",
+            "endpointId": "da20b87c-9889-49ff-8b4c-123456abcdef",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "url": "file:///path/to/destination"
+          },
+          "state": "COMPLETED",
+          "source": {
+            "accountId": "356fb849-037e-4a59-8536-123456abcdef",
+            "serviceId": "b24547d3-32fc-4a26-a06a-123456abcdef",
+            "deviceId": "5648e485-3f17-4109-bf92-123456abcdef",
+            "endpointId": "8301ff09-2cd6-4be4-ab04-123456abcdef",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "url": "file:///path/to/source"
+          },
+          "transferId": "5289f3fc-2e07-4153-814f-123456abcdef",
+          "createdOn": "2021-07-02T16:18:38.232Z",
+          "isRetry": false,
+          "lastModifiedOn": "2021-07-02T16:18:40.640Z"
+        }
+      }
+    },
+    {
+      "specversion": "1.0",
+      "id": "abcdef12-3456-7890-aabb-ccddeeff2211",
+      "time": "2021-07-02T16:18:49.430Z",
+      "source": "/transfers/f970c3df-b1be-473e-a596-123456abcdef",
+      "type": "com.signiant.jet.transfer.completed",
+      "data": {
+        "transfer": {
+          "jobId": "0295093b-b7d7-445b-867b-95a6dfaea3d4",
+          "executionId": "c33e7b7e-d1a9-4942-b094-123456abcdef",
+          "lastStateChangeOn": "2021-07-02T16:18:48.211072098Z",
+          "destination": {
+            "accountId": "356fb849-037e-4a59-8536-123456abcdef",
+            "serviceId": "b24547d3-32fc-4a26-a06a-123456abcdef",
+            "deviceId": "43dd9fd1-b24b-4b4a-ae2a-123456abcdef",
+            "endpointId": "da20b87c-9889-49ff-8b4c-123456abcdef",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "url": "file:///path/to/destination"
+          },
+          "state": "COMPLETED",
+          "source": {
+            "accountId": "356fb849-037e-4a59-8536-123456abcdef",
+            "serviceId": "b24547d3-32fc-4a26-a06a-123456abcdef",
+            "deviceId": "5648e485-3f17-4109-bf92-123456abcdef",
+            "endpointId": "8301ff09-2cd6-4be4-ab04-123456abcdef",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "url": "file:///path/to/source"
+          },
+          "transferId": "f970c3df-b1be-473e-a596-123456abcdef",
+          "createdOn": "2021-07-02T16:18:46.742Z",
+          "isRetry": false,
+          "lastModifiedOn": "2021-07-02T16:18:48.970Z"
+        }
+      }
+    }
+  ]
+}
+
+Transfer Canceled
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:44:58.627Z",
+      "type": "com.signiant.jet.transfer.canceled",
+      "source": "/transfers/31c26013-86d1-4386-afbd-4d7dcbf8bc09",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "31c26013-86d1-4386-afbd-4d7dcbf8bc09",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "state": "CANCELLED",
+          "lastStateChangeOn": "2021-02-17T18:44:51.394557263Z",
+          "lastModifiedOn": "2021-02-17T18:44:58.361Z",
+          "createdOn": "2021-02-17T18:44:50.635Z",
+          "isRetry": false,
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Transfer Failed
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T18:48:07.272Z",
+      "type": "com.signiant.jet.transfer.failed",
+      "source": "/transfers/76b0a08b-97a2-4ec0-8b66-6f7a4c0367ff",
+      "specversion": "1.0",
+      "data": {
+        "transfer": {
+          "transferId": "76b0a08b-97a2-4ec0-8b66-6f7a4c0367ff",
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "state": "FAILED",
+          "lastModifiedOn": "2021-02-17T18:48:06.841Z",
+          "createdOn": "2021-02-17T18:47:16.592Z",
+          "isRetry": true,
+          "retryInfo": {
+            "retryNumber": 2
+          },
+          "source": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412311",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "87654321-fe54-4e9a-9196-846ee3800eb1",
+            "url": "file:///path/to/source"
+          },
+          "destination": {
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "endpointId": "897654321-1234-1234-1234-123412322",
+            "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "deviceId": "12345678-1852-40b8-a9ae-47fec284d48f",
+            "url": "file:///path/to/destination"
+          },
+          "error": {
+            "code": "message.parts.receiptTimeout",
+            "errorHandlingPolicy": "RETRYABLE",
+            "message": "Not all message parts were received within timeout window",
+            "reason": "transfer.startFailed"
+          }
+        }
+      }
+    }
+  ]
+}
+
+Delivery Events
+Delivery Created
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.created",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "CREATED",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Delivery Queued
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.queued",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "QUEUED",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Delivery Scheduled
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.scheduled",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "SCHEDULED",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Delivery In Progress
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.inProgress",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "IN_PROGRESS",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Delivery Completed
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.completed",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "COMPLETED",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Delivery Failed
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-03-05T20:57:02.842Z",
+      "type": "com.signiant.jet.delivery.failed",
+      "source": "/jobs/dacb4292-1234-abcd-9999-1a2b3c4d5678",
+      "specversion": "1.0",
+      "data": {
+        "delivery": {
+          "jobId": "dacb4292-1234-abcd-9999-1a2b3c4d5678",
+          "deliveryId": "9a21cef7-e7d2-43e4-8722-ccddeeff1122",
+          "createdOn": "2021-03-05T20:56:58.388Z",
+          "lastModifiedOn": "2021-03-05T20:57:02.041Z",
+          "state": "FAILED",
+          "serviceId": "12345678-9860-4559-b873-ccddeeff1122"
+        }
+      }
+    }
+  ]
+}
+
+Storage Profile Events
+Storage Profile Created
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-16T18:50:59.273Z",
+      "type": "com.signiant.storageProfile.created",
+      "source": "/storageProfiles/12345678-1234-dcba-abcd-abcdef654321",
+      "specversion": "1.0",
+      "data": {
+        "storageProfile": {
+          "storageProfileId": "6b3e1154-2a8b-439d-97e6-2695fe414c52",
+          "serviceId": "f738a0e3-02fc-4af8-90cd-d54ee6da5262",
+          "accountId": "c3c7ce48-1412-46e7-8884-634ea45bd12c",
+          "url": "file:///path/to/source",
+          "name": "Example Server A",
+          "endpointId": "987583a2-0266-4fcf-8479-88344ea9f6b4",
+          "createdOn": "2021-02-18T18:20:46.230Z",
+          "lastModifiedOn": "2021-02-18T18:20:46.230Z",
+          "storageProfileType": "ON_PREMISE_FILE_STORAGE"
+        }
+      }
+    }
+  ]
+}
+
+Storage Profile Deleted
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-16T18:50:59.273Z",
+      "type": "com.signiant.storageProfile.deleted",
+      "source": "/storageProfiles/12345678-1234-dcba-abcd-abcdef654321",
+      "specversion": "1.0",
+      "data": {
+        "storageProfile": {
+          "storageProfileId": "12345678-1234-dcba-abcd-abcdef654321",
+          "serviceId": "12345678-1234-abcd-abcd-abcdef654321",
+          "accountId": "897654321-1234-1234-1234-123456abcdef",
+          "url": "file:///path/to/destination",
+          "name": "Example Server B",
+          "endpointId": "897654321-1234-1234-1234-123412322",
+          "createdOn": "2021-02-16T18:49:32.202Z",
+          "lastModifiedOn": "2021-02-16T18:50:58.595Z",
+          "storageProfileType": "ON_PREMISE_FILE_STORAGE",
+          "deleted": true,
+          "deletedOn": "2021-02-16T18:50:58.595Z"
+        }
+      }
+    }
+  ]
+}
+
+Job Events
+Job Created
+
+
+{
+  "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+  "events": [
+    {
+      "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+      "time": "2021-02-17T20:34:30.451Z",
+      "type": "com.signiant.jet.job.created",
+      "source": "/jobs/f5cdf02f-b759-4d65-a4b4-0921d35c1669",
+      "specversion": "1.0",
+      "data": {
+        "job": {
+          "jobId": "12345678-1234-1234-1234-123456abcdef",
+          "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+          "accountId": "897654321-1234-1234-1234-123456abcdef",
+          "name": "Example Job A",
+          "createdOn": "2021-02-17T20:34:29.795Z",
+          "lastModifiedOn": "2021-02-17T20:34:29.795Z",
+          "routeId": "abcdef12-bd16-4388-ad6e-c52c851b0540"
+        }
+      }
+    }
+  ]
+}
+{
+    "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+    "events": [
+      {
+        "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+        "time": "2021-02-17T20:33:51.019Z",
+        "type": "com.signiant.jet.job.deleted",
+        "source": "/jobs/936bc93d-35e3-4961-b3e4-947022382dba",
+        "specversion": "1.0",
+        "data": {
+          "job": {
+            "jobId": "12345678-1234-1234-1234-123456abcdef",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "name": "Example Job B",
+            "createdOn": "2021-02-16T18:45:48.073Z",
+            "lastModifiedOn": "2021-02-17T20:33:50.048Z",
+            "routeId": "abcdef12-bd16-4388-ad6e-c52c851b0540",
+            "deletedOn": "2021-02-17T20:33:50.048Z",
+            "paused": false,
+            "deleted": true
+          }
+        }
+      }
+    ]
+  }
+
+
+{
+    "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+    "events": [
+      {
+        "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+        "time": "2021-02-17T20:33:17.912Z",
+        "type": "com.signiant.jet.job.paused",
+        "source": "/jobs/153e72f6-1e4c-4ecd-9736-f072e3706a0c",
+        "specversion": "1.0",
+        "data": {
+          "job": {
+            "jobId": "12345678-1234-1234-1234-123456abcdef",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "name": "Example Job C",
+            "createdOn": "2021-02-17T20:29:58.074Z",
+            "lastModifiedOn": "2021-02-17T20:33:17.334Z",
+            "routeId": "abcdef12-bd16-4388-ad6e-c52c851b0540",
+            "paused": true
+          }
+        }
+      }
+    
+    ]
+}
+
+
+{
+
+    "subscriptionId": "1234abcd-12ab-1ab2-21ba-123456fedcba",
+    "events": [
+      {
+        "id": "abcdef12-3456-7890-aabb-ccddeeff1122",
+        "time": "2021-02-17T20:33:20.526Z",
+        "type": "com.signiant.jet.job.resumed",
+        "source": "/jobs/153e72f6-1234-1234-1234-f072e3706a0c",
+        "specversion": "1.0",
+        "data": {
+          "job": {
+            "jobId": "12345678-1234-1234-1234-123456abcdef",
+            "serviceId": "12345678-02fc-4af8-90cd-d54ee6da5262",
+            "accountId": "897654321-1234-1234-1234-123456abcdef",
+            "name": "Example Job D",
+            "createdOn": "2021-02-17T20:29:58.074Z",
+            "lastModifiedOn": "2021-02-17T20:33:19.912Z",
+            "routeId": "abcdef12-bd16-4388-ad6e-c52c851b0540",
+            "paused": false
+          }
+        }
+      }
+    ]
+},
