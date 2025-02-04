@@ -1,9 +1,8 @@
 import PropTypes from 'prop-types';
-import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase } from 'lucide-react';
+import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase, Package, Bell, BarChart, History } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SigniantAuth } from '../../services/auth';
 import { useTheme } from '../ThemeProvider';
-import { BarChart } from 'lucide-react';
 
 const SidebarItem = ({ icon, text, to, onClick }) => {
   const location = useLocation();
@@ -78,8 +77,10 @@ const DashboardLayout = ({ children }) => {
         <nav className="mt-6 flex flex-col justify-between h-[calc(100vh-100px)]">
           <div>
             <SidebarItem to="/transfers" icon={<Repeat size={20} />} text="Create New Transfers" />
-            {/* Removed Jobs and File Monitor */}
+            <SidebarItem to="/transfers/history" icon={<History size={20} />} text="Transfer History" />
+            <SidebarItem to="/delivery-status" icon={<Package size={20} />} text="Delivery Status" />
             <SidebarItem to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
+            <SidebarItem to="/notifications" icon={<Bell size={20} />} text="Email Notifications" />
           </div>
           <div className="mb-6">
             <SidebarItem 

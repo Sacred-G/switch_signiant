@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './components/ThemeProvider';
 import { Toaster } from './components/ui/toaster';
@@ -10,13 +10,36 @@ import JobsPage from './pages/JobsPage';
 import TransfersPage from './pages/transfersPage';
 import FileMonitor from './pages/FileMonitor';
 import AnalyticsPage from './pages/AnalyticsPage';
+import DeliveryStatusPage from './pages/DeliveryStatusPage';
+import EmailNotificationsPage from './pages/EmailNotificationsPage';
+import TransferHistoryPage from './pages/TransferHistoryPage';
 import { SigniantAuth } from './services/auth.ts';
 import { Loader2 } from 'lucide-react';
 
+// Global Error Boundary Component
+const ErrorFallback = ({ error, resetErrorBoundary }) => {
+  console.error('Global Error:', error);
+  return (
+    <div className="flex flex-col items-center justify-center h-screen bg-red-100">
+      <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+      <pre className="text-red-500 mb-4">{error.message}</pre>
+      <button 
+        onClick={resetErrorBoundary} 
+        className="px-4 py-2 bg-red-500 text-white rounded"
+      >
+        Try again
+      </button>
+    </div>
+  );
+};
+
 const DashboardContainer = () => {
+  console.log('DashboardContainer: Rendering');
   return (
     <DashboardLayout>
-      <Outlet />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Outlet />
+      </Suspense>
     </DashboardLayout>
   );
 };
@@ -25,10 +48,14 @@ const App = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [initError, setInitError] = useState(null);
 
+  console.log('App: Rendering');
+
   useEffect(() => {
+    console.log('App: useEffect triggered');
     // Initialize authentication state
     const initAuth = async () => {
       try {
+        console.log('App: Initializing authentication');
         await SigniantAuth.initialize();
         
         // Set up auth state listener
@@ -77,6 +104,7 @@ const App = () => {
 
   // Show loading state while initializing
   if (!isInitialized) {
+    console.log('App: Showing loading state');
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -86,6 +114,7 @@ const App = () => {
 
   // Show error state if initialization failed
   if (initError) {
+    console.error('App: Initialization error', initError);
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <h1 className="text-xl font-bold text-red-500 mb-4">Failed to initialize application</h1>
@@ -119,8 +148,18 @@ const App = () => {
             <Route index element={<Navigate to="/transfers" replace />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="transfers" element={<TransfersPage />} />
+            <Route path="transfers/history" element={<TransferHistoryPage />} />
             <Route path="files" element={<FileMonitor />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="notifications" element={<EmailNotificationsPage />} />
+            <Route 
+              path="delivery-status" 
+              element={
+                <React.Suspense fallback={<div>Loading Delivery Status...</div>}>
+                  <DeliveryStatusPage />
+                </React.Suspense>
+              } 
+            />
           </Route>
         </Routes>
       </Router>
