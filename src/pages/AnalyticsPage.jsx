@@ -98,8 +98,8 @@ const AnalyticsPage = () => {
   const getStatusColor = (status, errorCode) => {
     if (errorCode) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
     switch (status) {
-      case 'READY': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'IN_PROGRESS': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'READY': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      case 'IN_PROGRESS': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'ERROR': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
       case 'PAUSED': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
@@ -109,13 +109,14 @@ const AnalyticsPage = () => {
   const getStatusIcon = (status, errorCode) => {
     if (errorCode) return <FileWarning className="w-4 h-4" />;
     switch (status) {
-      case 'READY': return <Clock className="w-4 h-4" />;
-      case 'IN_PROGRESS': return <CheckCircle2 className="w-4 h-4" />;
+      case 'READY': return <CheckCircle2 className="w-4 h-4" />;
+      case 'IN_PROGRESS': return <Clock className="w-4 h-4" />;
       case 'ERROR': return <AlertTriangle className="w-4 h-4" />;
       case 'PAUSED': return <Pause className="w-4 h-4" />;
       default: return <AlertCircle className="w-4 h-4" />;
     }
   };
+
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -266,6 +267,7 @@ const AnalyticsPage = () => {
     )
   };
 
+
   return (
     <div className="p-8 space-y-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
       <div className="flex justify-between items-center">
@@ -306,139 +308,138 @@ const AnalyticsPage = () => {
             className="w-full dark:bg-gray-800 dark:text-white dark:border-gray-700"
             prefix={<Search className="w-4 h-4 dark:text-gray-400" />}
           />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] dark:bg-gray-800 dark:text-white dark:border-gray-700">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="READY">Ready</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="ERROR">Error</SelectItem>
-            <SelectItem value="PAUSED">Paused</SelectItem>
-          </SelectContent>
-        </Select>
+        </div>      <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <SelectTrigger className="w-[180px] dark:bg-gray-800 dark:text-white dark:border-gray-700">
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent className="dark:bg-gray-800 dark:border-gray-700">
+          <SelectItem value="all">All Statuses</SelectItem>
+          <SelectItem value="READY">Completed</SelectItem>
+          <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+          <SelectItem value="ERROR">Error</SelectItem>
+          <SelectItem value="PAUSED">Paused</SelectItem>
+        </SelectContent>
+      </Select>
       </div>
 
-      <Card className="dark:bg-gray-800 dark:border-gray-700">
-        <CardHeader>
-          <CardTitle className="dark:text-white">Active Jobs</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="dark:border-gray-700">
-                <TableHead className="dark:text-gray-400">Job Name</TableHead>
-                <TableHead className="dark:text-gray-400">Status</TableHead>
-                <TableHead className="dark:text-gray-400">Progress</TableHead>
-                <TableHead className="dark:text-gray-400">Size</TableHead>
-                <TableHead className="dark:text-gray-400">Files</TableHead>
-                <TableHead className="dark:text-gray-400">Last Modified</TableHead>
-                <TableHead className="dark:text-gray-400">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredJobs.map((job) => {
-                const transfer = jobTransfers[job.jobId];
-                const transferProgress = formatTransferProgress(transfer);
-                const size = getTransferSize(transfer);
-                const fileCount = getTransferFileCount(transfer);
-                const isPaused = job.status === 'PAUSED';
-                const isInProgress = job.status === 'IN_PROGRESS';
-                const canStart = job.status === 'READY' || isPaused;
-                
-                return (
-                  <TableRow key={job.jobId} className="dark:border-gray-700 dark:hover:bg-gray-700/50">
-                    <TableCell className="font-medium dark:text-gray-200">
-                      <div>
-                        {job.jobName}
-                        {job.activeAlerts?.length > 0 && (
-                          <div className="flex gap-1 mt-1">
-                            {job.activeAlerts.map((alert, i) => (
-                              <Badge 
-                                key={i} 
-                                variant="destructive"
-                                className="text-xs"
-                              >
-                                {alert.type}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        className={`${getStatusColor(job.status, job.errorCode)} flex items-center gap-2`}
-                      >
-                        {getStatusIcon(job.status, job.errorCode)}
-                        {job.status}
-                        {job.errorCode && ` (${job.errorCode})`}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="dark:text-gray-200">
-                      {job.status === 'IN_PROGRESS' && transfer && (
-                        <TransferProgress
-                          transferProgress={transferProgress}
-                          transferStartedOn={transfer.createdOn}
-                          currentRateBitsPerSecond={job.currentRateBitsPerSecond}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell className="dark:text-gray-200">
-                      {size > 0 ? formatBytes(size) : '0 B'}
-                    </TableCell>
-                    <TableCell className="dark:text-gray-200">
-                      {fileCount > 0 ? `${fileCount} files` : '0 files'}
-                    </TableCell>
-                    <TableCell className="dark:text-gray-200">
-                      {formatDate(job.lastActivity)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {canStart && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => isPaused ? handleResumeJob(job.jobId) : handleStartJob(job.jobId)}
-                            className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading}
-                          >
-                            {isPaused ? <PlayCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                          </Button>
-                        )}
-                        {isInProgress && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => handlePauseJob(job.jobId)}
-                            className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                            disabled={actionLoading}
-                          >
-                            <Pause className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleDeleteJob(job.jobId)}
-                          className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
-                          disabled={actionLoading || isInProgress}
+<Card className="dark:bg-gray-800 dark:border-gray-700">
+  <CardHeader>
+    <CardTitle className="dark:text-white">Active Jobs</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <Table>
+      <TableHeader>
+        <TableRow className="dark:border-gray-700">
+          <TableHead className="dark:text-gray-400">Job Name</TableHead>
+          <TableHead className="dark:text-gray-400">Status</TableHead>
+          <TableHead className="dark:text-gray-400">Progress</TableHead>
+          <TableHead className="dark:text-gray-400">Size</TableHead>
+          <TableHead className="dark:text-gray-400">Files</TableHead>
+          <TableHead className="dark:text-gray-400">Last Modified</TableHead>
+          <TableHead className="dark:text-gray-400">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {filteredJobs.map((job) => {
+          const transfer = jobTransfers[job.jobId];
+          const transferProgress = formatTransferProgress(transfer);
+          const size = getTransferSize(transfer);
+          const fileCount = getTransferFileCount(transfer);
+          const isPaused = job.status === 'PAUSED';
+          const isInProgress = job.status === 'IN_PROGRESS';
+          const canStart = job.status === 'READY' || isPaused;
+          
+          return (
+            <TableRow key={job.jobId} className="dark:border-gray-700 dark:hover:bg-gray-700/50">
+              <TableCell className="font-medium dark:text-gray-200">
+                <div>
+                  {job.jobName}
+                  {job.activeAlerts?.length > 0 && (
+                    <div className="flex gap-1 mt-1">
+                      {job.activeAlerts.map((alert, i) => (
+                        <Badge 
+                          key={i} 
+                          variant="destructive"
+                          className="text-xs"
                         >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
+                          {alert.type}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <Badge 
+                  className={`${getStatusColor(job.status, job.errorCode)} flex items-center gap-2`}
+                >
+                  {getStatusIcon(job.status, job.errorCode)}
+                  {job.status}
+                  {job.errorCode && ` (${job.errorCode})`}
+                </Badge>
+              </TableCell>
+              <TableCell className="dark:text-gray-200">
+                {job.status === 'IN_PROGRESS' && transfer && (
+                  <TransferProgress
+                    transferProgress={transferProgress}
+                    transferStartedOn={transfer.createdOn}
+                    currentRateBitsPerSecond={job.currentRateBitsPerSecond}
+                  />
+                )}
+              </TableCell>
+              <TableCell className="dark:text-gray-200">
+                {size > 0 ? formatBytes(size) : '0 B'}
+              </TableCell>
+              <TableCell className="dark:text-gray-200">
+                {fileCount > 0 ? `${fileCount} files` : '0 files'}
+              </TableCell>
+              <TableCell className="dark:text-gray-200">
+                {formatDate(job.lastActivity)}
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-2">
+                  {canStart && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => isPaused ? handleResumeJob(job.jobId) : handleStartJob(job.jobId)}
+                      className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                      disabled={actionLoading}
+                    >
+                      {isPaused ? <PlayCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                    </Button>
+                  )}
+                  {isInProgress && (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      onClick={() => handlePauseJob(job.jobId)}
+                      className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                      disabled={actionLoading}
+                    >
+                      <Pause className="w-4 h-4" />
+                    </Button>
+                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => handleDeleteJob(job.jobId)}
+                    className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                    disabled={actionLoading || isInProgress}
+                  >
+                    <Trash className="w-4 h-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  </CardContent>
+</Card>
+</div>
+);
 };
 
 export default AnalyticsPage;

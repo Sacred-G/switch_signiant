@@ -4,6 +4,7 @@ import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Switch } from '../components/ui/switch';
 import { 
   Select, 
   SelectContent, 
@@ -11,11 +12,12 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '../components/ui/select';
-import { Pause, Play, RefreshCw, Search, Loader2, Flame } from 'lucide-react';
+import { Pause, Play, RefreshCw, Search, Loader2, Flame, X, Bell } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
+import { saveNotificationPreferences } from '../services/emailNotificationService';
+import { EmailNotifications } from '../components/email-notifications';
 
-// ... (keeping formatDate function unchanged)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   
@@ -49,20 +51,25 @@ const formatDate = (dateString) => {
 };
 
 const TransferManager = () => {
+  const [showNotifications, setShowNotifications] = useState({});
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedSource, setSelectedSource] = useState('');
   const [selectedDestination, setSelectedDestination] = useState('');
-  const [fileName, setFileName] = useState('');
+  const [fileNames, setFileNames] = useState([]);
+  const [currentFileName, setCurrentFileName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [sources, setSources] = useState([]);
   const [destinations, setDestinations] = useState([]);
   const [triggerType, setTriggerType] = useState('MANUAL');
   const [isGrowingObjects, setIsGrowingObjects] = useState(false);
+  const [postTransferAction, setPostTransferAction] = useState('none');
+  const [moveDestinationId, setMoveDestinationId] = useState('');
+  const [notificationEmail, setNotificationEmail] = useState('');
+  const [enableNotifications, setEnableNotifications] = useState(false);
   const { toast } = useToast();
 
-  // ... (keeping fetchProfiles unchanged)
   useEffect(() => {
     const fetchProfiles = async () => {
       try {
@@ -151,7 +158,6 @@ const TransferManager = () => {
   const handleJobAction = async (jobId, action, triggers) => {
     try {
       if (action === "START") {
-        // For READY state jobs, use startManualJob
         await startManualJob(jobId);
       } else if (action === "PAUSE") {
         await pauseJob(jobId);
@@ -174,29 +180,56 @@ const TransferManager = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleAddFile = (e) => {
     e.preventDefault();
-    setIsUploading(true);
-
-    if (!fileName.endsWith('.mxf')) {
+    if (!currentFileName) return;
+    
+    if (!currentFileName.endsWith('.mxf')) {
       toast({
         title: "Validation Error",
         description: "File must have .mxf extension",
         variant: "destructive",
       });
-      setIsUploading(false);
       return;
     }
 
+    setFileNames([...fileNames, currentFileName]);
+    setCurrentFileName('');
+  };
+
+  const handleRemoveFile = (index) => {
+    setFileNames(fileNames.filter((_, i) => i !== index));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (fileNames.length === 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please add at least one file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (enableNotifications && notificationEmail && !validateEmail(notificationEmail)) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
     try {
       const headers = await getSigniantHeaders();
-      
-      // Map UI trigger type to API trigger type
       const apiTriggerType = triggerType === 'HOT_FOLDER' ? 'HOTFOLDER' : triggerType;
       
       const jobBody = {
-        name: fileName,
-        triggerTypes: [apiTriggerType], // Use mapped trigger type
+        name: fileNames.join(', '),
+        triggerTypes: [apiTriggerType],
         actions: [{
           type: "TRANSFER",
           data: {
@@ -208,7 +241,7 @@ const TransferManager = () => {
             },
             transferOptions: {
               objectPatterns: {
-                inclusions: [`**/${fileName}`],
+                inclusions: fileNames.map(file => `**/${file}`),
                 type: "GLOB"
               },
               areGrowingObjects: isGrowingObjects,
@@ -217,7 +250,22 @@ const TransferManager = () => {
                   growingIdleTimeoutInSeconds: 5
                 }
               })
-            }
+            },
+            postTransfer: postTransferAction !== 'none' ? {
+              ...(postTransferAction === 'delete' && {
+                deleteTransferredSourceFiles: {
+                  enabled: true
+                }
+              }),
+              ...(postTransferAction === 'move' && {
+                moveTransferredSourceFiles: {
+                  enabled: true,
+                  destination: {
+                    storageProfileId: moveDestinationId
+                  }
+                }
+              })
+            } : undefined
           }
         }],
         triggers: [{
@@ -238,7 +286,7 @@ const TransferManager = () => {
         }]
       };
 
-      console.log('Creating job with body:', jobBody); // Debug log
+      console.log('Creating job with body:', jobBody);
 
       const response = await fetch(
         "https://platform-api-service.services.cloud.signiant.com/v1/jobs",
@@ -256,11 +304,38 @@ const TransferManager = () => {
 
       const data = await response.json();
 
-      setFileName('');
+      // If notifications are enabled, save the notification preferences
+      if (enableNotifications && notificationEmail) {
+        try {
+          await saveNotificationPreferences({
+            job_id: data.jobId,
+            email_notifications_enabled: true,
+            transfer_started: false,
+            transfer_completed: true,
+            transfer_failed: true,
+            notification_emails: [notificationEmail]
+          });
+        } catch (error) {
+          console.error('Failed to save notification preferences:', error);
+          // Don't throw here, we still want to show success for job creation
+          toast({
+            title: "Warning",
+            description: "Job created, but failed to save notification preferences",
+            variant: "warning",
+          });
+        }
+      }
+
+      setFileNames([]);
+      setCurrentFileName('');
       setSelectedSource('');
       setSelectedDestination('');
       setTriggerType('MANUAL');
       setIsGrowingObjects(false);
+      setPostTransferAction('none');
+      setMoveDestinationId('');
+      setNotificationEmail('');
+      setEnableNotifications(false);
       
       toast({
         title: "Success",
@@ -279,6 +354,11 @@ const TransferManager = () => {
     }
   };
 
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
   const filteredTransfers = transfers
     .filter(transfer => {
       const matchesSearch = transfer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -287,7 +367,6 @@ const TransferManager = () => {
       return matchesSearch && matchesStatus;
     });
 
-  // ... (rest of the component JSX remains unchanged)
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -409,24 +488,145 @@ const TransferManager = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-200">
-                MXF File Name
+                Post-Transfer Action
               </label>
-              <Input
-                type="text"
-                value={fileName}
-                onChange={(e) => setFileName(e.target.value)}
-                placeholder="Enter filename (e.g., DELETETEST_10242024_01d.mxf)"
-                required
-                className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-              />
+              <Select
+                value={postTransferAction}
+                onValueChange={setPostTransferAction}
+              >
+                <SelectTrigger className="bg-orange-50 border-orange-200 hover:border-orange-300 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                  <SelectValue placeholder="Select post-transfer action" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-orange-200 dark:bg-gray-800 dark:border-gray-700">
+                  <div className="py-2 px-2 text-sm font-medium text-orange-600 bg-orange-50 dark:bg-gray-700 dark:text-orange-400">
+                    Post-Transfer Actions
+                  </div>
+                  <SelectItem 
+                    value="none" 
+                    className="hover:bg-orange-50 focus:bg-orange-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                  >
+                    No Action
+                  </SelectItem>
+                  <SelectItem 
+                    value="delete" 
+                    className="hover:bg-orange-50 focus:bg-orange-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                  >
+                    Delete Source Files
+                  </SelectItem>
+                  <SelectItem 
+                    value="move" 
+                    className="hover:bg-orange-50 focus:bg-orange-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                  >
+                    Move Source Files
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {postTransferAction === 'move' && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium dark:text-gray-200">
+                  Move Destination Profile
+                </label>
+                <Select
+                  value={moveDestinationId}
+                  onValueChange={setMoveDestinationId}
+                >
+                  <SelectTrigger className="bg-orange-50 border-orange-200 hover:border-orange-300 focus:ring-orange-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <SelectValue placeholder="Select move destination" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-orange-200 dark:bg-gray-800 dark:border-gray-700">
+                    <div className="py-2 px-2 text-sm font-medium text-orange-600 bg-orange-50 dark:bg-gray-700 dark:text-orange-400">
+                      Move Destinations
+                    </div>
+                    {sources.map(profile => (
+                      <SelectItem
+                        key={profile.storageProfileId}
+                        value={profile.storageProfileId}
+                        className="hover:bg-orange-50 focus:bg-orange-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200"
+                      >
+                        {profile.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium dark:text-gray-200">
+                Email Notifications
+              </label>
+              <div className="flex items-center space-x-2 mb-2">
+                <Switch
+                  checked={enableNotifications}
+                  onCheckedChange={setEnableNotifications}
+                  className="data-[state=checked]:bg-purple-600"
+                />
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Enable email notifications
+                </span>
+              </div>
+              {enableNotifications && (
+                <div className="space-y-2">
+                  <Input
+                    type="email"
+                    value={notificationEmail}
+                    onChange={(e) => setNotificationEmail(e.target.value)}
+                    placeholder="Enter email address for notifications"
+                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    You'll receive notifications when the transfer completes or fails
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium dark:text-gray-200">
+                MXF Files
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={currentFileName}
+                  onChange={(e) => setCurrentFileName(e.target.value)}
+                  placeholder="Enter filename (e.g., DELETETEST_10242024_01d.mxf)"
+                  className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
+                />
+                <Button 
+                  type="button"
+                  onClick={handleAddFile}
+                  variant="outline"
+                >
+                  Add File
+                </Button>
+              </div>
+              <div className="space-y-2 mt-2">
+                {fileNames.map((file, index) => (
+                  <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-gray-700 p-2 rounded">
+                    <span className="text-sm dark:text-gray-200">{file}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveFile(index)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                File must have .mxf extension
+                Files must have .mxf extension
               </p>
             </div>
 
             <Button
               type="submit"
-              disabled={isUploading}
+              disabled={isUploading || fileNames.length === 0 || (postTransferAction === 'move' && !moveDestinationId)}
               className="w-full"
             >
               {isUploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -475,7 +675,6 @@ const TransferManager = () => {
           </SelectContent>
         </Select>
       </div>
-
       <div className="space-y-4">
         {filteredTransfers.length === 0 ? (
           <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -503,6 +702,17 @@ const TransferManager = () => {
                   }>
                     {transfer.status}
                   </Badge>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowNotifications(prev => ({
+                      ...prev,
+                      [transfer.jobId]: !prev[transfer.jobId]
+                    }))}
+                    className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
+                  >
+                    <Bell className="h-4 w-4" />
+                  </Button>
                   {transfer.status === "IN_PROGRESS" && (
                     <Button 
                       size="sm" 
@@ -570,11 +780,20 @@ const TransferManager = () => {
                   )}
 
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 pt-2">
-                    <span>Job Name: {transfer.name}</span>
+                    <span>Job ID: {transfer.jobId}</span>
                     <span>
                       Last Activity: {formatDate(transfer.lastModifiedOn)}
                     </span>
                   </div>
+
+                  {showNotifications[transfer.jobId] && (
+                    <div className="mt-4">
+                      <EmailNotifications 
+                        jobId={transfer.jobId}
+                        jobType={transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") ? 'HOT_FOLDER' : 'MANUAL'}
+                      />
+                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

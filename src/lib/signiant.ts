@@ -328,4 +328,7 @@ export const getTransferDetails = async (jobId: string): Promise<TransferDetails
       transferProgress: progress
     };
   } catch (error) {
-    console.error('Error fetching transfer details:', error
+    console.error('Error fetching transfer details:', error);
+    return null;
+  }
+};

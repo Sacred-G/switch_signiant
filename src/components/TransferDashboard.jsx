@@ -10,6 +10,8 @@ import { TransferProgress } from './transferProgress';
 import { useToast } from '../components/ui/use-toast';
 import { RefreshCw, Search, AlertTriangle, CheckCircle2, Clock, AlertCircle, Pause, Play } from 'lucide-react';
 import { pauseJob, resumeJob } from '../lib/signiant';
+import { saveTransferToHistory } from '../services/transferHistoryService';
+import { sendTransferStatusNotification } from '../services/emailNotificationService';
 
 const TransferDashboard = () => {
   const [transfers, setTransfers] = useState([]);
@@ -34,6 +36,48 @@ const TransferDashboard = () => {
       if (!response.ok) throw new Error('Failed to fetch transfers');
       const data = await response.json();
       setTransfers(data.items);
+
+      // Save each transfer to Supabase
+      for (const transfer of data.items) {
+        try {
+          // Extract source and destination from transfer data
+          const source = transfer.actions?.[0]?.data?.source?.name || 
+                        transfer.sourceProfile?.name || 
+                        'Unknown';
+          const destination = transfer.actions?.[0]?.data?.destination?.name || 
+                            transfer.destinationProfile?.name || 
+                            'Unknown';
+
+          // Calculate total size and file count
+          let totalBytes = transfer.bytesTransferred || 0;
+          let totalFiles = transfer.totalResultCount || 0;
+
+          const transferData = {
+            jobId: transfer.jobId,
+            name: transfer.jobName || 'Unnamed Transfer',
+            status: transfer.status,
+            source,
+            destination,
+            total_bytes: totalBytes,
+            total_files: totalFiles,
+            created_on: transfer.startTime || new Date().toISOString(),
+            last_modified_on: transfer.lastModifiedOn || new Date().toISOString()
+          };
+
+          await saveTransferToHistory(transferData);
+          
+          // Send notification for new transfers
+          if (transfer.status === 'IN_PROGRESS') {
+            await sendTransferStatusNotification(transferData, 'STARTED');
+          } else if (transfer.status === 'COMPLETED' || transfer.status === 'SUCCESS') {
+            await sendTransferStatusNotification(transferData, 'COMPLETED');
+          } else if (transfer.status === 'ERROR' || transfer.status === 'FAILED') {
+            await sendTransferStatusNotification(transferData, 'FAILED');
+          }
+        } catch (error) {
+          console.error('Error saving transfer to history:', error);
+        }
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -74,10 +118,41 @@ const TransferDashboard = () => {
 
   const handleJobAction = async (jobId, action) => {
     try {
+      // Perform the action
       if (action === 'PAUSE') {
         await pauseJob(jobId);
       } else if (action === 'RESUME') {
         await resumeJob(jobId);
+      }
+
+      // Update the transfer status in Supabase
+      const transfer = transfers.find(t => t.jobId === jobId);
+      if (transfer) {
+        const source = transfer.actions?.[0]?.data?.source?.name || 
+                      transfer.sourceProfile?.name || 
+                      'Unknown';
+        const destination = transfer.actions?.[0]?.data?.destination?.name || 
+                          transfer.destinationProfile?.name || 
+                          'Unknown';
+
+        const transferData = {
+          jobId: transfer.jobId,
+          name: transfer.jobName || 'Unnamed Transfer',
+          status: action === 'PAUSE' ? 'PAUSED' : 'IN_PROGRESS',
+          source,
+          destination,
+          total_bytes: transfer.bytesTransferred || 0,
+          total_files: transfer.totalResultCount || 0,
+          created_on: transfer.startTime || new Date().toISOString(),
+          last_modified_on: new Date().toISOString()
+        };
+
+        await saveTransferToHistory(transferData);
+
+        // Send notification for status change
+        if (action === 'RESUME') {
+          await sendTransferStatusNotification(transferData, 'STARTED');
+        }
       }
       
       toast({
