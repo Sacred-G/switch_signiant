@@ -18,6 +18,15 @@ export const getTransferHistory = async () => {
 /**
  * Save or update a transfer in localStorage
  */
+export const clearTransferHistory = async () => {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    console.log('Cleared transfer history');
+  } catch (error) {
+    console.error('Error clearing transfer history:', error);
+  }
+};
+
 export const saveTransferToHistory = async (transfer) => {
   try {
     console.log('Saving transfer to history:', transfer);
@@ -26,10 +35,10 @@ export const saveTransferToHistory = async (transfer) => {
     const history = await getTransferHistory();
     
     // Find existing transfer index
-    const existingIndex = history.findIndex(t => t.job_id === transfer.jobId);
+    const existingIndex = history.findIndex(t => t.job_id === transfer.job_id);
     
     const historyEntry = {
-      job_id: transfer.jobId,
+      job_id: transfer.job_id,
       name: transfer.name,
       status: transfer.status,
       source: transfer.source,

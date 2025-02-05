@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TransferHistory } from '../components/history/TransferHistory';
 import { Input } from '../components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Search } from 'lucide-react';
 import { getAllJobs } from '../services/deliveryService';
 import { saveTransferToHistory, getTransferHistory } from '../services/transferHistoryService';
@@ -10,8 +9,6 @@ import { useToast } from '../components/ui/use-toast';
 const TransferHistoryPage = () => {
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +20,6 @@ const TransferHistoryPage = () => {
       console.log('Fetching jobs...');
       const jobs = await getAllJobs();
       console.log('Fetched jobs:', jobs);
-      console.log('Job statuses:', jobs.map(job => job.status));
       
       // Process each job
       console.log('Processing jobs...');
@@ -68,21 +64,24 @@ const TransferHistoryPage = () => {
         }
 
         try {
-          const transferData = {
-            jobId: job.jobId,
-            name: job.name || 'Unnamed Transfer',
-            status: job.status,
-            source,
-            destination,
-            total_bytes: totalSize,
-            total_files: totalFiles,
-            created_on: job.createdOn || job.created || new Date().toISOString(),
-            last_modified_on: job.lastModifiedOn || job.modified || new Date().toISOString()
-          };
-          
-          console.log('Saving transfer data:', transferData);
-          console.log('Transfer status:', transferData.status);
-          await saveTransferToHistory(transferData);
+          const upperStatus = job.status?.toUpperCase();
+          // Only save completed transfers with data
+          if ((upperStatus === 'COMPLETED' || upperStatus === 'SUCCESS') && totalSize > 0) {
+            const transferData = {
+              job_id: job.jobId,  // Match the field name used in storage
+              name: job.name || 'Unnamed Transfer',
+              status: job.status,
+              source,
+              destination,
+              total_bytes: totalSize,
+              total_files: totalFiles,
+              created_on: job.createdOn || job.created || new Date().toISOString(),
+              last_modified_on: job.lastModifiedOn || job.modified || new Date().toISOString()
+            };
+            
+            console.log('Saving completed transfer:', transferData);
+            await saveTransferToHistory(transferData);
+          }
         } catch (error) {
           console.error('Error saving job:', job.jobId, error);
         }
@@ -112,13 +111,9 @@ const TransferHistoryPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredTransfers = transfers
-    .filter(transfer => {
-      const matchesSearch = transfer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          transfer.jobId.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === "all" || transfer.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
+  const filteredTransfers = transfers.filter(transfer => 
+    transfer.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -126,44 +121,14 @@ const TransferHistoryPage = () => {
         <h1 className="text-2xl font-bold dark:text-white">Transfer History</h1>
       </div>
 
-      <div className="flex gap-4 items-center mb-6">
-        <div className="flex-1">
-          <Input
-            placeholder="Search transfers..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-            prefix={<Search className="h-4 w-4 dark:text-gray-400" />}
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] bg-gray-50 border-gray-200 hover:border-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent className="bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700">
-            <div className="py-2 px-2 text-sm font-medium text-gray-600 bg-gray-50 dark:bg-gray-700 dark:text-gray-300">
-              Filter by Status
-            </div>
-            <SelectItem value="all" className="hover:bg-gray-50 focus:bg-gray-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              All Statuses
-            </SelectItem>
-            <SelectItem value="READY" className="hover:bg-green-50 focus:bg-green-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              Ready
-            </SelectItem>
-            <SelectItem value="IN_PROGRESS" className="hover:bg-blue-50 focus:bg-blue-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              In Progress
-            </SelectItem>
-            <SelectItem value="COMPLETED" className="hover:bg-emerald-50 focus:bg-emerald-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              Completed
-            </SelectItem>
-            <SelectItem value="ERROR" className="hover:bg-red-50 focus:bg-red-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              Error
-            </SelectItem>
-            <SelectItem value="PAUSED" className="hover:bg-yellow-50 focus:bg-yellow-100 dark:hover:bg-gray-700 dark:focus:bg-gray-600 dark:text-gray-200">
-              Paused
-            </SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="mb-6">
+        <Input
+          placeholder="Search transfers by name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full max-w-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
+          prefix={<Search className="h-4 w-4 dark:text-gray-400" />}
+        />
       </div>
 
       {loading ? (

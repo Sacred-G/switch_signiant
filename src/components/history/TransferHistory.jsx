@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { AlertTriangle, CheckCircle2, AlertCircle, XCircle, Bell } from 'lucide-react';
 import { Button } from '../ui/button';
@@ -10,17 +9,20 @@ export function TransferHistory({ transfers }) {
   const navigate = useNavigate();
   console.log('Received transfers in TransferHistory:', transfers);
   
+  const getCompletedTransfers = (transfers) => {
+    return transfers.filter(transfer => {
+      const upperStatus = transfer.status?.toUpperCase();
+      const hasData = (transfer.total_bytes || 0) > 0;
+      return (upperStatus === 'COMPLETED' || upperStatus === 'SUCCESS') && hasData;
+    });
+  };
+
   const getJobStats = (jobs) => {
-    return jobs.reduce((acc, job) => {
-      acc.total++;
-      const upperStatus = job.status?.toUpperCase();
-      if (upperStatus === 'COMPLETED' || upperStatus === 'SUCCESS') acc.completed++;
-      if (upperStatus === 'IN_PROGRESS' || upperStatus === 'RUNNING') acc.inProgress++;
-      if (upperStatus === 'ERROR' || upperStatus === 'FAILED') acc.error++;
-      if (upperStatus === 'READY') acc.inProgress++;
-      if (upperStatus === 'PAUSED') acc.inProgress++;
-      return acc;
-    }, { total: 0, completed: 0, inProgress: 0, error: 0 });
+    const completedJobs = getCompletedTransfers(jobs);
+    return {
+      total: completedJobs.length,
+      completed: completedJobs.length
+    };
   };
 
   const formatBytes = (bytes) => {
@@ -56,47 +58,23 @@ export function TransferHistory({ transfers }) {
     }
   };
 
-  const getStatusColor = (status) => {
-    const upperStatus = status?.toUpperCase();
-    if (upperStatus === 'ERROR' || upperStatus === 'FAILED') {
-      return 'bg-red-500 text-white hover:bg-red-600';
-    }
-    return 'bg-green-500 text-white hover:bg-green-600';
-  };
-
   const jobStats = getJobStats(transfers);
   console.log('Calculated job stats:', jobStats);
 
   return (
     <div className="space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          { title: "Total Transfers", value: jobStats.total, icon: <CheckCircle2 className="text-green-500" /> },
-          { title: "In Progress", value: jobStats.inProgress, icon: <AlertCircle className="text-blue-500" /> },
-          { title: "Failed", value: jobStats.error, icon: <XCircle className="text-red-500" /> }
-        ].map((stat, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              {stat.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Completed Transfers</CardTitle>
+            <CheckCircle2 className="text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{jobStats.total}</div>
+          </CardContent>
+        </Card>
       </div>
-
-      {/* Alert Banner */}
-      {jobStats.error > 0 && (
-        <div className="bg-red-50 border-l-4 border-red-500 p-4">
-          <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-            <p className="text-sm text-red-700">{jobStats.error} transfer(s) failed and require attention</p>
-          </div>
-        </div>
-      )}
 
       {/* Transfers Table */}
       <Card>
@@ -110,7 +88,6 @@ export function TransferHistory({ transfers }) {
                 <TableHead>Transfer Name</TableHead>
                 <TableHead>Source</TableHead>
                 <TableHead>Destination</TableHead>
-                <TableHead>Status</TableHead>
                 <TableHead>Size</TableHead>
                 <TableHead>Files</TableHead>
                 <TableHead>Created</TableHead>
@@ -119,14 +96,11 @@ export function TransferHistory({ transfers }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transfers.map((transfer) => (
-                <TableRow key={transfer.jobId}>
+              {getCompletedTransfers(transfers).map((transfer) => (
+                <TableRow key={transfer.job_id}>
                   <TableCell className="font-medium">{transfer.name}</TableCell>
                   <TableCell>{transfer.source || 'Unknown'}</TableCell>
                   <TableCell>{transfer.destination || 'Unknown'}</TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(transfer.status)}>{transfer.status}</Badge>
-                  </TableCell>
                   <TableCell>
                     <div className="text-sm">
                       {formatBytes(transfer.total_bytes || 0)}
@@ -140,7 +114,7 @@ export function TransferHistory({ transfers }) {
                       variant="outline"
                       size="sm"
                       className="flex items-center gap-2"
-                      onClick={() => navigate(`/notifications?jobId=${transfer.jobId}&jobType=MANUAL`)}
+                      onClick={() => navigate(`/notifications?jobId=${transfer.job_id}&jobType=MANUAL`)}
                     >
                       <Bell className="h-4 w-4" />
                       Notifications
