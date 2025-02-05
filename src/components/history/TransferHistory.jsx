@@ -2,9 +2,14 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { AlertTriangle, CheckCircle2, AlertCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, AlertCircle, XCircle, Bell } from 'lucide-react';
+import { Button } from '../ui/button';
+import { useNavigate } from 'react-router-dom';
 
 export function TransferHistory({ transfers }) {
+  const navigate = useNavigate();
+  console.log('Received transfers in TransferHistory:', transfers);
+  
   const getJobStats = (jobs) => {
     return jobs.reduce((acc, job) => {
       acc.total++;
@@ -60,6 +65,7 @@ export function TransferHistory({ transfers }) {
   };
 
   const jobStats = getJobStats(transfers);
+  console.log('Calculated job stats:', jobStats);
 
   return (
     <div className="space-y-6">
@@ -109,6 +115,7 @@ export function TransferHistory({ transfers }) {
                 <TableHead>Files</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Activity</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -128,6 +135,17 @@ export function TransferHistory({ transfers }) {
                   <TableCell>{transfer.total_files || 0} files</TableCell>
                   <TableCell>{formatDate(transfer.created_on)}</TableCell>
                   <TableCell>{formatDate(transfer.last_modified_on)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                      onClick={() => navigate(`/notifications?jobId=${transfer.jobId}&jobType=MANUAL`)}
+                    >
+                      <Bell className="h-4 w-4" />
+                      Notifications
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

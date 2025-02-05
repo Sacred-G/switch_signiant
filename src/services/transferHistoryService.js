@@ -1,80 +1,56 @@
-import { supabase } from '../lib/supabase';
+const STORAGE_KEY = 'transfer_history';
 
 /**
- * Get all transfer history from Supabase for the current user
+ * Get all transfer history from localStorage
  */
 export const getTransferHistory = async () => {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-
-    const { data, error } = await supabase
-      .from('transfer_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_on', { ascending: false });
-
-    if (error) {
-      console.error('Supabase error in getTransferHistory:', error);
-      throw error;
-    }
-    return data || [];
+    const historyString = localStorage.getItem(STORAGE_KEY);
+    const history = historyString ? JSON.parse(historyString) : [];
+    console.log('Retrieved transfer history:', history);
+    return history.sort((a, b) => new Date(b.created_on) - new Date(a.created_on));
   } catch (error) {
     console.error('Error fetching transfer history:', error);
-    throw error;
+    return [];
   }
 };
 
 /**
- * Save or update a transfer in the transfer_history table
+ * Save or update a transfer in localStorage
  */
 export const saveTransferToHistory = async (transfer) => {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-
-    // Check if transfer already exists
-    const { data: existing } = await supabase
-      .from('transfer_history')
-      .select('id')
-      .eq('job_id', transfer.jobId)
-      .single();
-
+    console.log('Saving transfer to history:', transfer);
+    
+    // Get existing history
+    const history = await getTransferHistory();
+    
+    // Find existing transfer index
+    const existingIndex = history.findIndex(t => t.job_id === transfer.jobId);
+    
     const historyEntry = {
-      user_id: user.id,
       job_id: transfer.jobId,
       name: transfer.name,
       status: transfer.status,
       source: transfer.source,
       destination: transfer.destination,
-      total_bytes: transfer.size,
-      total_files: transfer.fileCount || 0,
-      created_on: transfer.created_at || new Date().toISOString(),
+      total_bytes: transfer.total_bytes,
+      total_files: transfer.total_files || 0,
+      created_on: transfer.created_on || new Date().toISOString(),
       last_modified_on: new Date().toISOString()
     };
 
-    if (existing) {
-      // Update existing entry
-      const { error: updateError } = await supabase
-      .from('transfer_history')
-      .update(historyEntry)
-      .eq('job_id', transfer.jobId);
-
-      if (updateError) {
-        console.error('Supabase error in updateTransfer:', updateError);
-        throw updateError;
-      }
+    if (existingIndex !== -1) {
+      // Update existing transfer
+      history[existingIndex] = historyEntry;
     } else {
-      // Insert new entry
-      const { error: insertError } = await supabase
-      .from('transfer_history')
-        .insert([historyEntry]);
-
-      if (insertError) {
-        console.error('Supabase error in insertTransfer:', insertError);
-        throw insertError;
-      }
+      // Add new transfer
+      history.push(historyEntry);
     }
+
+    // Save back to localStorage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    console.log('Saved transfer history:', history);
   } catch (error) {
     console.error('Error saving transfer to history:', error);
     throw error;

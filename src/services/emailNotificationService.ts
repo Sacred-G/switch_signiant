@@ -1,48 +1,22 @@
 import { supabase } from '../lib/supabase';
-import { SigniantAuth } from './auth';
-import type { User } from '@supabase/supabase-js';
+import type { NotificationPreferences } from '../types/notifications';
 
-// Replace hardcoded API key with environment variable
-const RESEND_API_KEY = process.env.NEXT_PUBLIC_RESEND_API_KEY;
+const RESEND_API_KEY = import.meta.env.VITE_RESEND_API_KEY;
 
-export interface NotificationPreferences {
-  id?: string;
-  user_id?: string;
-  job_id?: string;
-  job_type?: 'HOT_FOLDER' | 'MANUAL';
-  email_notifications_enabled: boolean;
-  transfer_started: boolean;
-  transfer_completed: boolean;
-  transfer_failed: boolean;
-  notification_emails: string[];
-  created_at?: string;
-  updated_at?: string;
+if (!RESEND_API_KEY) {
+  console.error('RESEND_API_KEY environment variable is not configured');
 }
 
-export interface Transfer {
-  name: string;
-  status: string;
-  source: string;
-  destination: string;
-  total_bytes: number;
-  total_files: number;
-}
-
-/**
- * Get notification preferences for the current user and optionally for a specific job
- */
-export const getNotificationPreferences = async (jobId?: string): Promise<NotificationPreferences> => {
+export const getNotificationPreferences = async (jobId: string | null = null): Promise<NotificationPreferences> => {
   try {
-    const session = await SigniantAuth.getSession();
-    if (!session?.user) {
-      throw new Error('User not authenticated');
-    }
+    const { data: authData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!authData.user) throw new Error('No authenticated user');
 
-    const user = session.user;
     let query = supabase
       .from('notification_preferences')
       .select('*')
-      .eq('user_id', user.id);
+      .eq('user_id', authData.user.id);
     
     if (jobId) {
       query = query.eq('job_id', jobId);
@@ -56,13 +30,13 @@ export const getNotificationPreferences = async (jobId?: string): Promise<Notifi
 
     // Return default preferences if none exist
     return data || {
-      user_id: user.id,
+      user_id: authData.user.id,
       job_id: jobId,
-      email_notifications_enabled: true,
       transfer_started: true,
       transfer_completed: true,
       transfer_failed: true,
-      notification_emails: [user.email] // Include user's email as default
+      email_notifications_enabled: true,
+      notification_emails: []
     };
   } catch (error) {
     console.error('Error fetching notification preferences:', error);
@@ -70,52 +44,61 @@ export const getNotificationPreferences = async (jobId?: string): Promise<Notifi
   }
 };
 
-/**
- * Save notification preferences for the current user and optionally for a specific job
- */
-export const saveNotificationPreferences = async (preferences: Partial<NotificationPreferences>): Promise<void> => {
+export const saveNotificationPreferences = async (preferences: NotificationPreferences): Promise<void> => {
   try {
-    const session = await SigniantAuth.getSession();
-    if (!session?.user) {
-      throw new Error('User not authenticated');
+    const { data: authData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!authData.user) throw new Error('No authenticated user');
+
+    let query = supabase
+      .from('notification_preferences')
+      .select('id')
+      .eq('user_id', authData.user.id);
+    
+    if (preferences.job_id) {
+      query = query.eq('job_id', preferences.job_id);
     }
 
-    const user = session.user;
-    const query = {
-      user_id: user.id,
-      ...preferences,
-      updated_at: new Date().toISOString()
+    const { data: existing } = await query.single();
+
+    // Create preferences data without the user_id from preferences
+    const { user_id: _, ...preferencesWithoutUserId } = preferences;
+    const preferencesData = {
+      user_id: authData.user.id,
+      ...preferencesWithoutUserId
     };
 
-    const { error } = await supabase
-      .from('notification_preferences')
-      .upsert(query, {
-        onConflict: 'user_id,job_id'
-      });
+    if (existing) {
+      let updateQuery = supabase
+        .from('notification_preferences')
+        .update(preferencesData)
+        .eq('user_id', authData.user.id);
+      
+      if (preferences.job_id) {
+        updateQuery = updateQuery.eq('job_id', preferences.job_id);
+      }
 
-    if (error) throw error;
+      const { error } = await updateQuery;
+      if (error) throw error;
+    } else {
+      const { error } = await supabase
+        .from('notification_preferences')
+        .insert([preferencesData]);
+
+      if (error) throw error;
+    }
   } catch (error) {
     console.error('Error saving notification preferences:', error);
     throw error;
   }
 };
 
-interface EmailResponse {
-  id: string;
-  from: string;
-  to: string;
-  created_at: string;
-}
-
-/**
- * Send an email notification using Resend
- */
-export const sendEmailNotification = async (
-  to: string,
-  subject: string,
-  content: string
-): Promise<EmailResponse> => {
+export const sendEmailNotification = async (to: string, subject: string, content: string): Promise<any> => {
   try {
+    if (!RESEND_API_KEY) {
+      throw new Error('Resend API key is not configured');
+    }
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -142,34 +125,44 @@ export const sendEmailNotification = async (
   }
 };
 
-/**
- * Send a transfer status notification
- */
-export const sendTransferStatusNotification = async (
-  transfer: Transfer,
-  status: 'STARTED' | 'COMPLETED' | 'FAILED',
-  jobId?: string
-): Promise<void> => {
+interface Transfer {
+  job_id?: string;
+  name: string;
+  source: string;
+  destination: string;
+  total_bytes: number;
+  total_files: number;
+}
+
+export const sendTransferStatusNotification = async (transfer: Transfer, status: 'STARTED' | 'COMPLETED' | 'FAILED'): Promise<void> => {
   try {
-    const session = await SigniantAuth.getSession();
-    if (!session?.user) {
-      throw new Error('User not authenticated');
-    }
+    const { data: authData, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!authData.user) throw new Error('No authenticated user');
 
     // Get user's notification preferences
-    const preferences = await getNotificationPreferences(jobId);
+    const preferences = await getNotificationPreferences(transfer.job_id || null);
     
     // Check if notifications are enabled
     if (!preferences.email_notifications_enabled) return;
 
     // Check if this type of notification is enabled
-    const notificationType = {
+    const notificationTypes = {
       'STARTED': 'transfer_started',
       'COMPLETED': 'transfer_completed',
       'FAILED': 'transfer_failed'
-    }[status] as keyof NotificationPreferences;
+    } as const;
 
-    if (!notificationType || !preferences[notificationType]) return;
+    const notificationType = notificationTypes[status] as keyof NotificationPreferences;
+    if (!preferences[notificationType]) return;
+
+    // Get notification recipients
+    const recipients = [
+      authData.user.email,
+      ...(preferences.notification_emails || [])
+    ].filter((email): email is string => Boolean(email)); // Type guard to ensure non-null strings
+
+    if (recipients.length === 0) return;
 
     // Format size
     const formatBytes = (bytes: number): string => {
@@ -197,16 +190,12 @@ export const sendTransferStatusNotification = async (
       <p>View more details in your <a href="${window.location.origin}/history">transfer history</a>.</p>
     `;
 
-    // Send to all registered notification emails
-    const emails = preferences.notification_emails;
-    if (emails.length === 0) {
-      // If no notification emails are set, use the user's email
-      emails.push(session.user.email);
-    }
-
-    // Send to each email address
+    // Send to all recipients
     await Promise.all(
-      emails.map(email => sendEmailNotification(email, subject, content))
+      recipients.map(email => 
+        sendEmailNotification(email, subject, content)
+          .catch(err => console.error(`Failed to send notification to ${email}:`, err))
+      )
     );
   } catch (error) {
     console.error('Error sending transfer status notification:', error);

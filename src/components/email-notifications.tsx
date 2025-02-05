@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { PlusIcon, MinusIcon } from 'lucide-react';
 import { useToast } from './ui/use-toast';
 import { getNotificationPreferences, saveNotificationPreferences } from '../services/emailNotificationService';
-import type { NotificationPreferences } from '../services/emailNotificationService';
+import type { NotificationPreferences } from '../types/notifications';
 
 interface EmailNotificationsProps {
   jobId: string;
@@ -13,7 +13,15 @@ interface EmailNotificationsProps {
 }
 
 export const EmailNotifications: React.FC<EmailNotificationsProps> = ({ jobId, jobType }) => {
-  const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
+  const [preferences, setPreferences] = useState<NotificationPreferences>({
+    user_id: '',
+    job_id: jobId,
+    transfer_started: true,
+    transfer_completed: true,
+    transfer_failed: true,
+    email_notifications_enabled: true,
+    notification_emails: ['']
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [emails, setEmails] = useState<string[]>(['']);
@@ -28,8 +36,9 @@ export const EmailNotifications: React.FC<EmailNotificationsProps> = ({ jobId, j
       setLoading(true);
       const prefs = await getNotificationPreferences(jobId);
       setPreferences(prefs);
-      if (prefs.notification_emails?.length > 0) {
-        setEmails(prefs.notification_emails);
+      const notificationEmails = prefs.notification_emails || [];
+      if (notificationEmails.length > 0) {
+        setEmails(notificationEmails);
       } else {
         setEmails(['']);
       }
@@ -48,7 +57,6 @@ export const EmailNotifications: React.FC<EmailNotificationsProps> = ({ jobId, j
 
   const handleSave = async () => {
     try {
-      if (!preferences) return;
 
       await saveNotificationPreferences({
         ...preferences,
@@ -81,9 +89,6 @@ export const EmailNotifications: React.FC<EmailNotificationsProps> = ({ jobId, j
     return <div className="text-red-500">{error}</div>;
   }
 
-  if (!preferences) {
-    return null;
-  }
 
   return (
     <div className="space-y-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow">

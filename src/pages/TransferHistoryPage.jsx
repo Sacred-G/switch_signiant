@@ -23,6 +23,7 @@ const TransferHistoryPage = () => {
       console.log('Fetching jobs...');
       const jobs = await getAllJobs();
       console.log('Fetched jobs:', jobs);
+      console.log('Job statuses:', jobs.map(job => job.status));
       
       // Process each job
       console.log('Processing jobs...');
@@ -80,6 +81,7 @@ const TransferHistoryPage = () => {
           };
           
           console.log('Saving transfer data:', transferData);
+          console.log('Transfer status:', transferData.status);
           await saveTransferToHistory(transferData);
         } catch (error) {
           console.error('Error saving job:', job.jobId, error);
@@ -113,7 +115,7 @@ const TransferHistoryPage = () => {
   const filteredTransfers = transfers
     .filter(transfer => {
       const matchesSearch = transfer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          transfer.job_id.toLowerCase().includes(searchTerm.toLowerCase());
+                          transfer.jobId.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesStatus = statusFilter === "all" || transfer.status === statusFilter;
       return matchesSearch && matchesStatus;
     });

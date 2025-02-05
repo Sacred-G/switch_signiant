@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SigniantAuth } from '../lib/signiant';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
@@ -14,6 +15,7 @@ import { saveTransferToHistory } from '../services/transferHistoryService';
 import { sendTransferStatusNotification } from '../services/emailNotificationService';
 
 const TransferDashboard = () => {
+  const navigate = useNavigate();
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -35,6 +37,7 @@ const TransferDashboard = () => {
 
       if (!response.ok) throw new Error('Failed to fetch transfers');
       const data = await response.json();
+      console.log('Fetched transfers:', data.items);
       setTransfers(data.items);
 
       // Save each transfer to Supabase
@@ -53,7 +56,7 @@ const TransferDashboard = () => {
           let totalFiles = transfer.totalResultCount || 0;
 
           const transferData = {
-            jobId: transfer.jobId,
+            jobId: transfer.id || transfer.jobId,
             name: transfer.jobName || 'Unnamed Transfer',
             status: transfer.status,
             source,
@@ -126,7 +129,7 @@ const TransferDashboard = () => {
       }
 
       // Update the transfer status in Supabase
-      const transfer = transfers.find(t => t.jobId === jobId);
+      const transfer = transfers.find(t => t.id === jobId || t.jobId === jobId);
       if (transfer) {
         const source = transfer.actions?.[0]?.data?.source?.name || 
                       transfer.sourceProfile?.name || 
@@ -136,7 +139,7 @@ const TransferDashboard = () => {
                           'Unknown';
 
         const transferData = {
-          jobId: transfer.jobId,
+          jobId: transfer.id || transfer.jobId,
           name: transfer.jobName || 'Unnamed Transfer',
           status: action === 'PAUSE' ? 'PAUSED' : 'IN_PROGRESS',
           source,
@@ -276,7 +279,7 @@ const TransferDashboard = () => {
             </TableHeader>
             <TableBody>
               {filteredTransfers.map((transfer) => (
-                <TableRow key={transfer.jobId} className="group hover:bg-gray-50">
+                <TableRow key={transfer.id || transfer.jobId} className="group hover:bg-gray-50">
                   <TableCell className="font-medium">
                     {transfer.jobName}
                     {transfer.filesRemaining > 0 && (
@@ -310,7 +313,7 @@ const TransferDashboard = () => {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => handleJobAction(transfer.jobId, 'PAUSE')}
+                          onClick={() => handleJobAction(transfer.id || transfer.jobId, 'PAUSE')}
                         >
                           <Pause className="w-4 h-4" />
                         </Button>
@@ -319,11 +322,29 @@ const TransferDashboard = () => {
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => handleJobAction(transfer.jobId, 'RESUME')}
+                          onClick={() => handleJobAction(transfer.id || transfer.jobId, 'RESUME')}
                         >
                           <Play className="w-4 h-4" />
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          console.log('Configuring notifications for transfer:', transfer);
+                          const jobId = transfer.id || transfer.jobId;
+                          console.log('Using jobId:', jobId);
+                          const params = new URLSearchParams();
+                          params.set('jobId', jobId);
+                          params.set('jobType', 'MANUAL');
+                          navigate({
+                            pathname: '/notifications',
+                            search: params.toString()
+                          });
+                        }}
+                      >
+                        Configure Notifications
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>
