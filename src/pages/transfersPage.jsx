@@ -12,11 +12,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '../components/ui/select';
-import { Pause, Play, RefreshCw, Search, Loader2, Flame, X, Bell } from 'lucide-react';
+import { Pause, Play, RefreshCw, Search, Loader2, Flame, X } from 'lucide-react';
 import { useToast } from '../components/ui/use-toast';
 import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
-import { saveNotificationPreferences } from '../services/emailNotificationService';
-import { EmailNotifications } from '../components/email-notifications';
 
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
@@ -51,7 +49,6 @@ const formatDate = (dateString) => {
 };
 
 const TransferManager = () => {
-  const [showNotifications, setShowNotifications] = useState({});
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -66,8 +63,6 @@ const TransferManager = () => {
   const [isGrowingObjects, setIsGrowingObjects] = useState(false);
   const [postTransferAction, setPostTransferAction] = useState('none');
   const [moveDestinationId, setMoveDestinationId] = useState('');
-  const [notificationEmail, setNotificationEmail] = useState('');
-  const [enableNotifications, setEnableNotifications] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -212,15 +207,6 @@ const TransferManager = () => {
       return;
     }
 
-    if (enableNotifications && notificationEmail && !validateEmail(notificationEmail)) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsUploading(true);
 
     try {
@@ -304,28 +290,6 @@ const TransferManager = () => {
 
       const data = await response.json();
 
-      // If notifications are enabled, save the notification preferences
-      if (enableNotifications && notificationEmail) {
-        try {
-          await saveNotificationPreferences({
-            job_id: data.jobId,
-            email_notifications_enabled: true,
-            transfer_started: false,
-            transfer_completed: true,
-            transfer_failed: true,
-            notification_emails: [notificationEmail]
-          });
-        } catch (error) {
-          console.error('Failed to save notification preferences:', error);
-          // Don't throw here, we still want to show success for job creation
-          toast({
-            title: "Warning",
-            description: "Job created, but failed to save notification preferences",
-            variant: "warning",
-          });
-        }
-      }
-
       setFileNames([]);
       setCurrentFileName('');
       setSelectedSource('');
@@ -334,8 +298,6 @@ const TransferManager = () => {
       setIsGrowingObjects(false);
       setPostTransferAction('none');
       setMoveDestinationId('');
-      setNotificationEmail('');
-      setEnableNotifications(false);
       
       toast({
         title: "Success",
@@ -352,11 +314,6 @@ const TransferManager = () => {
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
   };
 
   const filteredTransfers = transfers
@@ -555,36 +512,6 @@ const TransferManager = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-medium dark:text-gray-200">
-                Email Notifications
-              </label>
-              <div className="flex items-center space-x-2 mb-2">
-                <Switch
-                  checked={enableNotifications}
-                  onCheckedChange={setEnableNotifications}
-                  className="data-[state=checked]:bg-purple-600"
-                />
-                <span className="text-sm text-gray-600 dark:text-gray-300">
-                  Enable email notifications
-                </span>
-              </div>
-              {enableNotifications && (
-                <div className="space-y-2">
-                  <Input
-                    type="email"
-                    value={notificationEmail}
-                    onChange={(e) => setNotificationEmail(e.target.value)}
-                    placeholder="Enter email address for notifications"
-                    className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-                  />
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    You'll receive notifications when the transfer completes or fails
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium dark:text-gray-200">
                 MXF Files
               </label>
               <div className="flex gap-2">
@@ -702,17 +629,6 @@ const TransferManager = () => {
                   }>
                     {transfer.status}
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowNotifications(prev => ({
-                      ...prev,
-                      [transfer.jobId]: !prev[transfer.jobId]
-                    }))}
-                    className="h-8 w-8 p-0 dark:border-gray-600 dark:hover:bg-gray-700"
-                  >
-                    <Bell className="h-4 w-4" />
-                  </Button>
                   {transfer.status === "IN_PROGRESS" && (
                     <Button 
                       size="sm" 
@@ -785,15 +701,6 @@ const TransferManager = () => {
                       Last Activity: {formatDate(transfer.lastModifiedOn)}
                     </span>
                   </div>
-
-                  {showNotifications[transfer.jobId] && (
-                    <div className="mt-4">
-                      <EmailNotifications 
-                        jobId={transfer.jobId}
-                        jobType={transfer.triggers?.some(trigger => trigger.type === "HOT_FOLDER") ? 'HOT_FOLDER' : 'MANUAL'}
-                      />
-                  </div>
-                  )}
                 </div>
               </CardContent>
             </Card>

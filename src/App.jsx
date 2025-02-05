@@ -11,7 +11,6 @@ import TransfersPage from './pages/transfersPage';
 import FileMonitor from './pages/FileMonitor';
 import AnalyticsPage from './pages/AnalyticsPage';
 import DeliveryStatusPage from './pages/DeliveryStatusPage';
-import EmailNotificationsPage from './pages/EmailNotificationsPage';
 import TransferHistoryPage from './pages/TransferHistoryPage';
 import { SigniantAuth } from './services/auth.ts';
 import { Loader2 } from 'lucide-react';
@@ -151,7 +150,6 @@ const App = () => {
             <Route path="transfers/history" element={<TransferHistoryPage />} />
             <Route path="files" element={<FileMonitor />} />
             <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="notifications" element={<EmailNotificationsPage />} />
             <Route 
               path="delivery-status" 
               element={

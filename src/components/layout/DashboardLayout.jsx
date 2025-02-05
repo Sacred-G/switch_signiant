@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase, Package, Bell, BarChart, History } from 'lucide-react';
+import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase, Package, BarChart, History } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SigniantAuth } from '../../services/auth';
 import { useTheme } from '../ThemeProvider';
@@ -80,7 +80,6 @@ const DashboardLayout = ({ children }) => {
             <SidebarItem to="/transfers/history" icon={<History size={20} />} text="Transfer History" />
             <SidebarItem to="/delivery-status" icon={<Package size={20} />} text="Delivery Status" />
             <SidebarItem to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
-            <SidebarItem to="/notifications" icon={<Bell size={20} />} text="Email Notifications" />
           </div>
           <div className="mb-6">
             <SidebarItem 
