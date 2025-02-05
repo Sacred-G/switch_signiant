@@ -64,23 +64,28 @@ const TransferHistoryPage = () => {
         }
 
         try {
-          const upperStatus = job.status?.toUpperCase();
-          // Only save completed transfers with data
-          if ((upperStatus === 'COMPLETED' || upperStatus === 'SUCCESS') && totalSize > 0) {
-            const transferData = {
-              job_id: job.jobId,  // Match the field name used in storage
-              name: job.name || 'Unnamed Transfer',
-              status: job.status,
-              source,
-              destination,
-              total_bytes: totalSize,
-              total_files: totalFiles,
-              created_on: job.createdOn || job.created || new Date().toISOString(),
-              last_modified_on: job.lastModifiedOn || job.modified || new Date().toISOString()
-            };
-            
-            console.log('Saving completed transfer:', transferData);
-            await saveTransferToHistory(transferData);
+          // Save completed files to history
+          if (job.files?.completed && job.files.completed.length > 0) {
+            // Calculate total size and files from completed files
+            const completedSize = job.files.completed.reduce((total, file) => total + (file.sizeInBytes || 0), 0);
+            const completedFiles = job.files.completed.length;
+
+            if (completedSize > 0) {
+              const transferData = {
+                job_id: job.jobId,
+                name: job.name || 'Unnamed Transfer',
+                status: 'COMPLETED',
+                source,
+                destination,
+                total_bytes: completedSize,
+                total_files: completedFiles,
+                created_on: job.createdOn || job.created || new Date().toISOString(),
+                last_modified_on: job.lastModifiedOn || job.modified || new Date().toISOString()
+              };
+              
+              console.log('Saving completed transfer:', transferData);
+              await saveTransferToHistory(transferData);
+            }
           }
         } catch (error) {
           console.error('Error saving job:', job.jobId, error);

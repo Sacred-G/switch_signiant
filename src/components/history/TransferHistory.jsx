@@ -10,11 +10,14 @@ export function TransferHistory({ transfers }) {
   console.log('Received transfers in TransferHistory:', transfers);
   
   const getCompletedTransfers = (transfers) => {
-    return transfers.filter(transfer => {
-      const upperStatus = transfer.status?.toUpperCase();
+    console.log('Filtering transfers:', transfers);
+    const filtered = transfers.filter(transfer => {
       const hasData = (transfer.total_bytes || 0) > 0;
-      return (upperStatus === 'COMPLETED' || upperStatus === 'SUCCESS') && hasData;
+      console.log(`Transfer ${transfer.name}: bytes=${transfer.total_bytes}, hasData=${hasData}`);
+      return hasData;
     });
+    console.log('Filtered transfers:', filtered);
+    return filtered;
   };
 
   const getJobStats = (jobs) => {
