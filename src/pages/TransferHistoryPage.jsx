@@ -112,7 +112,10 @@ const TransferHistoryPage = () => {
 
   const filteredTransfers = transfers.filter(transfer => {
     const matchesName = transfer.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = searchDate ? new Date(transfer.created_on).toISOString().split('T')[0] === new Date(searchDate).toISOString().split('T')[0] : true;
+    const matchesDate = searchDate ? 
+      new Date(transfer.created_on).setHours(0, 0, 0, 0) === 
+      new Date(searchDate).setHours(0, 0, 0, 0) : 
+      true;
     return matchesName && matchesDate;
   });
 
