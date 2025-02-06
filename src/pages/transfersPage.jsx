@@ -13,7 +13,6 @@ import {
   SelectValue 
 } from '../components/ui/select';
 import { Pause, Play, RefreshCw, Search, Loader2, Flame, X } from 'lucide-react';
-import { useToast } from '../components/ui/use-toast';
 import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
 
 const formatDate = (dateString) => {
@@ -63,7 +62,6 @@ const TransferManager = () => {
   const [isGrowingObjects, setIsGrowingObjects] = useState(false);
   const [postTransferAction, setPostTransferAction] = useState('none');
   const [moveDestinationId, setMoveDestinationId] = useState('');
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -101,11 +99,6 @@ const TransferManager = () => {
         setDestinations(destinationProfiles);
       } catch (error) {
         console.error('Failed to fetch profiles:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profiles. Please try again.",
-          variant: "destructive",
-        });
       }
     };
 
@@ -130,19 +123,15 @@ const TransferManager = () => {
         profilesResponse.json()
       ]);
 
-      const enrichedTransfers = jobsData.items.map(job => ({
-        ...job,
-        sourceProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.source?.storageProfileId),
-        destinationProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.destination?.storageProfileId)
-      }));
+const enrichedTransfers = jobsData.items.map(job => ({
+  ...job,
+  sourceProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.source?.storageProfileId),
+  destinationProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.destination?.storageProfileId),
+  destinationUrl: job.actions?.[0]?.data?.destination?.url || 'URL not available'
+}));
 
       setTransfers(enrichedTransfers);
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive"
-      });
     }
   };
 
@@ -160,18 +149,9 @@ const TransferManager = () => {
         await resumeJob(jobId);
       }
       
-      toast({
-        title: "Success",
-        description: `Job ${action.toLowerCase()}ed successfully`
-      });
       
       fetchData();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: `Failed to ${action.toLowerCase()} job: ${error.message}`,
-        variant: "destructive"
-      });
     }
   };
 
@@ -180,11 +160,6 @@ const TransferManager = () => {
     if (!currentFileName) return;
     
     if (!currentFileName.endsWith('.mxf')) {
-      toast({
-        title: "Validation Error",
-        description: "File must have .mxf extension",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -199,11 +174,6 @@ const TransferManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (fileNames.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please add at least one file",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -299,18 +269,9 @@ const TransferManager = () => {
       setPostTransferAction('none');
       setMoveDestinationId('');
       
-      toast({
-        title: "Success",
-        description: `Job created successfully! Job ID: ${data.jobId}`,
-      });
 
       fetchData();
     } catch (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
     } finally {
       setIsUploading(false);
     }
@@ -666,9 +627,9 @@ const TransferManager = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Destination</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        {transfer.destinationProfile?.name || 'Unknown'}
-                      </p>
+<p className="text-sm text-gray-500 dark:text-gray-400">
+  {transfer.destinationUrl || transfer.destinationProfile?.name || 'Unknown'}
+</p>
                     </div>
                   </div>
                   
@@ -697,6 +658,7 @@ const TransferManager = () => {
 
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 pt-2">
                     <span>Job ID: {transfer.jobId}</span>
+                    <span>Created On: {formatDate(transfer.createdOn)}</span>
                     <span>
                       Last Activity: {formatDate(transfer.lastModifiedOn)}
                     </span>

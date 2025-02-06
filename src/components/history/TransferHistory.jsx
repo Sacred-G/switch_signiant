@@ -36,24 +36,26 @@ export function TransferHistory({ transfers }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString, isRelative = false) => {
     if (!dateString) return 'N/A';
     
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) return 'N/A';
       
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / (1000 * 60));
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (isRelative) {
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMins = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-      if (diffDays < 7) return `${diffDays}d ago`;
-
+        if (diffMins < 1) return 'Just now';
+        if (diffMins < 60) return `${diffMins}m ago`;
+        if (diffHours < 24) return `${diffHours}h ago`;
+        if (diffDays < 7) return `${diffDays}d ago`;
+      }
+      
       return date.toLocaleString();
     } catch (error) {
       console.error('Error formatting date:', error);
@@ -95,7 +97,6 @@ export function TransferHistory({ transfers }) {
                 <TableHead>Files</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Last Activity</TableHead>
-                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -111,18 +112,7 @@ export function TransferHistory({ transfers }) {
                   </TableCell>
                   <TableCell>{transfer.total_files || 0} files</TableCell>
                   <TableCell>{formatDate(transfer.created_on)}</TableCell>
-                  <TableCell>{formatDate(transfer.last_modified_on)}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      onClick={() => navigate(`/notifications?jobId=${transfer.job_id}&jobType=MANUAL`)}
-                    >
-                      <Bell className="h-4 w-4" />
-                      Notifications
-                    </Button>
-                  </TableCell>
+                  <TableCell>{formatDate(transfer.last_modified_on, true)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

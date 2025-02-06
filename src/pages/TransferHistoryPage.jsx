@@ -4,12 +4,10 @@ import { Input } from '../components/ui/input';
 import { Search } from 'lucide-react';
 import { getAllJobs } from '../services/deliveryService';
 import { saveTransferToHistory, getTransferHistory } from '../services/transferHistoryService';
-import { useToast } from '../components/ui/use-toast';
 
 const TransferHistoryPage = () => {
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
 
   const fetchTransfers = async () => {
@@ -99,11 +97,6 @@ const TransferHistoryPage = () => {
       setTransfers(updatedHistory);
     } catch (error) {
       console.error('Failed to fetch transfers:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load transfer history. Please try again.",
-        variant: "destructive"
-      });
     } finally {
       setLoading(false);
     }
