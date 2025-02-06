@@ -113,8 +113,8 @@ const TransferHistoryPage = () => {
   const filteredTransfers = transfers.filter(transfer => {
     const matchesName = transfer.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDate = searchDate ? 
-      new Date(transfer.created_on).setHours(0, 0, 0, 0) === 
-      new Date(searchDate).setHours(0, 0, 0, 0) : 
+      new Date(new Date(transfer.created_on).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })).getTime() === 
+      new Date(new Date(searchDate).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })).getTime() : 
       true;
     return matchesName && matchesDate;
   });
