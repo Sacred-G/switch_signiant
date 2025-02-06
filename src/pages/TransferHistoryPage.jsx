@@ -112,7 +112,7 @@ const TransferHistoryPage = () => {
 
   const filteredTransfers = transfers.filter(transfer => {
     const matchesName = transfer.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = searchDate ? new Date(transfer.created_on).toDateString() === new Date(searchDate).toDateString() : true;
+    const matchesDate = searchDate ? new Date(transfer.created_on).toISOString().split('T')[0] === new Date(searchDate).toISOString().split('T')[0] : true;
     return matchesName && matchesDate;
   });
 
@@ -123,13 +123,6 @@ const TransferHistoryPage = () => {
       </div>
 
       <div className="flex gap-4 mb-6">
-        <Input
-          placeholder="Search transfers by name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full max-w-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
-          prefix={<Search className="h-4 w-4 dark:text-gray-400" />}
-        />
         <Input
           placeholder="Search transfers by name..."
           value={searchTerm}
