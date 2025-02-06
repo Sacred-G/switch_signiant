@@ -8,7 +8,6 @@ import { saveTransferToHistory, getTransferHistory } from '../services/transferH
 const TransferHistoryPage = () => {
   const [transfers, setTransfers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [searchDate, setSearchDate] = useState("");
   const [loading, setLoading] = useState(true);
 
   const fetchTransfers = async () => {
@@ -110,14 +109,9 @@ const TransferHistoryPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredTransfers = transfers.filter(transfer => {
-    const matchesName = transfer.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = searchDate ? 
-      new Date(new Date(transfer.created_on).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })).getTime() === 
-      new Date(new Date(searchDate).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles' })).getTime() : 
-      true;
-    return matchesName && matchesDate;
-  });
+  const filteredTransfers = transfers.filter(transfer =>
+    transfer.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -132,12 +126,6 @@ const TransferHistoryPage = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full max-w-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
           prefix={<Search className="h-4 w-4 dark:text-gray-400" />}
-        />
-        <Input
-          type="date"
-          value={searchDate}
-          onChange={(e) => setSearchDate(e.target.value)}
-          className="w-full max-w-md dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:placeholder-gray-400"
         />
       </div>
 

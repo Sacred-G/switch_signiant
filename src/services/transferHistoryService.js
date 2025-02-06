@@ -45,7 +45,7 @@ export const saveTransferToHistory = async (transfer) => {
       destination: transfer.destination,
       total_bytes: transfer.total_bytes,
       total_files: transfer.total_files || 0,
-      created_on: transfer.created_on || new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+created_on: transfer.created_on || transfer.created || new Date().toISOString(),
       last_modified_on: new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
     };
 
