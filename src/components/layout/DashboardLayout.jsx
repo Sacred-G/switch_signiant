@@ -49,8 +49,14 @@ const DashboardLayout = ({ children }) => {
 
   const handleLogout = async () => {
     try {
+      // First perform the logout
       await SigniantAuth.logout();
-      navigate('/login');
+      
+      // Then navigate to login page
+      // Wrap in setTimeout to ensure all cleanup is complete
+      setTimeout(() => {
+        navigate('/login');
+      }, 0);
     } catch (error) {
       console.error('Logout failed:', error);
     }

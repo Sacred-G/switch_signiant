@@ -3,7 +3,7 @@ import { TransferHistory } from '../components/history/TransferHistory';
 import { Input } from '../components/ui/input';
 import { Search } from 'lucide-react';
 import { getAllJobs } from '../services/deliveryService';
-import { saveTransferToHistory, getTransferHistory } from '../services/transferHistoryService';
+import { saveTransferToHistory, getTransferHistory, migrateLocalStorageToSupabase } from '../services/transferHistoryService';
 
 const TransferHistoryPage = () => {
   const [transfers, setTransfers] = useState([]);
@@ -103,7 +103,18 @@ const TransferHistoryPage = () => {
   };
 
   useEffect(() => {
-    fetchTransfers();
+    const initializeHistory = async () => {
+      try {
+        // First migrate any existing localStorage data to Supabase
+        await migrateLocalStorageToSupabase();
+        // Then fetch transfers which will now include both API and migrated data
+        await fetchTransfers();
+      } catch (error) {
+        console.error('Error initializing history:', error);
+      }
+    };
+
+    initializeHistory();
     // Set up auto-refresh every 30 seconds
     const interval = setInterval(fetchTransfers, 30000);
     return () => clearInterval(interval);

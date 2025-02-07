@@ -96,7 +96,6 @@ export function TransferHistory({ transfers }) {
                 <TableHead>Size</TableHead>
                 <TableHead>Files</TableHead>
                 <TableHead>Created</TableHead>
-                <TableHead>Last Activity</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -112,7 +111,6 @@ export function TransferHistory({ transfers }) {
                   </TableCell>
                   <TableCell>{transfer.total_files || 0} files</TableCell>
                   <TableCell>{formatDate(transfer.created_on)}</TableCell>
-                  <TableCell>{formatDate(transfer.last_modified_on, true)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
