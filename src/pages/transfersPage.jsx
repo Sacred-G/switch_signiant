@@ -15,30 +15,33 @@ import {
 import { Pause, Play, RefreshCw, Search, Loader2, Flame, X } from 'lucide-react';
 import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
 
-const formatDate = (dateString) => {
+const formatDate = (dateString, useRelative = false) => {
   if (!dateString) return 'N/A';
   
   try {
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return 'N/A';
     
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (useRelative) {
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
+      if (diffMins < 1) return 'Just now';
+      if (diffMins < 60) return `${diffMins}m ago`;
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+    }
+    
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
       hour12: true
     }).format(date);
   } catch (error) {
@@ -658,9 +661,9 @@ const enrichedTransfers = jobsData.items.map(job => ({
 
                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 pt-2">
                     <span>Job ID: {transfer.jobId}</span>
-                    <span>Created On: {formatDate(transfer.createdOn)}</span>
+                    <span>Created On: {formatDate(transfer.createdOn, false)}</span>
                     <span>
-                      Last Activity: {formatDate(transfer.lastModifiedOn)}
+                      Last Activity: {formatDate(transfer.lastModifiedOn, true)}
                     </span>
                   </div>
                 </div>
