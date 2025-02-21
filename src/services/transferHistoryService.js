@@ -1,99 +1,72 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabase.js';
+import { sendTransferNotification } from './emailService';
 
 /**
- * Migrate existing localStorage data to Supabase
+ * Get all testing transfer history from Supabase for the current user
  */
-export const migrateLocalStorageToSupabase = async () => {
+export const getTestingTransferHistory = async () => {
   try {
-    const STORAGE_KEY = 'transfer_history';
-    const historyString = localStorage.getItem(STORAGE_KEY);
-    if (!historyString) return;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No authenticated user');
-
-    const localHistory = JSON.parse(historyString);
+    console.log('Getting current user...');
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
     
-    // Transform and prepare data for Supabase
-    const transferEntries = localHistory.map(transfer => ({
-      user_id: user.id,
-      job_id: transfer.job_id,
-      name: transfer.name,
-      status: transfer.status,
-      source: transfer.source,
-      destination: transfer.destination,
-      total_bytes: transfer.total_bytes,
-      total_files: transfer.total_files || 0,
-      created_on: transfer.created_on || transfer.created || new Date().toISOString()
-    }));
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      throw new Error('No authenticated user');
+    }
+    
+    console.log('Found user:', user.id);
 
-    // Check for existing entries first
-    const { data: existingEntries, error: checkError } = await supabase
-      .from('transfer_history')
-      .select('job_id')
-      .in('job_id', transferEntries.map(t => t.job_id));
+    console.log('Querying testing_transfer_history table...');
+    const { data, error, count } = await supabase
+      .from('testing_transfer_history')
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('completed_on', { ascending: false });
 
-    if (checkError) throw checkError;
-
-    // Filter out entries that already exist
-    const existingJobIds = new Set(existingEntries.map(e => e.job_id));
-    const newEntries = transferEntries.filter(entry => !existingJobIds.has(entry.job_id));
-
-    if (newEntries.length > 0) {
-      // Only insert new entries
-      const { error } = await supabase
-        .from('transfer_history')
-        .insert(newEntries);
-
-      if (error) throw error;
-      console.log(`Migrated ${newEntries.length} new entries to Supabase`);
-    } else {
-      console.log('No new entries to migrate');
+    if (error) {
+      console.error('Supabase query error:', error);
+      throw error;
     }
 
-    // Clear localStorage after successful migration
-    localStorage.removeItem(STORAGE_KEY);
-    console.log('Successfully migrated local storage data to Supabase');
-  } catch (error) {
-    console.error('Error migrating data to Supabase:', error);
-    throw error;
-  }
-};
+    console.log(`Retrieved ${count} testing transfer history records:`, data);
+    
+    if (!data || data.length === 0) {
+      console.log('No testing transfer history found for user');
+    }
 
-
-/**
- * Get all transfer history from Supabase for the current user
- */
-export const getTransferHistory = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No authenticated user');
-
-    const { data, error } = await supabase
-      .from('transfer_history')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_on', { ascending: false });
-
-    if (error) throw error;
-
-    console.log('Retrieved transfer history:', data);
     return data || [];
   } catch (error) {
-    console.error('Error fetching transfer history:', error);
+    console.error('Error in getTestingTransferHistory:', error);
+    if (error.message?.includes('JWT')) {
+      console.error('JWT/Authentication error detected');
+    }
     return [];
   }
 };
 
 /**
- * Save or update a transfer in Supabase
+ * Save transfer to testing history table in Supabase
  */
-export const saveTransferToHistory = async (transfer) => {
+export const saveToTestingHistory = async (transfer) => {
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('No authenticated user');
-
-    console.log('Saving transfer to history:', transfer);
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      throw new Error('No authenticated user');
+    }
+    
+    console.log('Saving transfer to testing history:', JSON.stringify(transfer, null, 2));
     
     const transferEntry = {
       user_id: user.id,
@@ -104,22 +77,280 @@ export const saveTransferToHistory = async (transfer) => {
       destination: transfer.destination,
       total_bytes: transfer.total_bytes,
       total_files: transfer.total_files || 0,
-      created_on: transfer.created_on || transfer.created || new Date().toISOString()
+      created_on: transfer.createdOn || new Date().toISOString(),
+      completed_on: transfer.status === 'COMPLETED' ? 
+                   (transfer.completedOn || transfer.lastModifiedOn || new Date().toISOString()) : 
+                   null,
+      last_modified_on: transfer.lastModifiedOn || transfer.modified || new Date().toISOString()
     };
 
-    // Upsert the transfer (insert if not exists, update if exists)
-    const { error } = await supabase
-      .from('transfer_history')
+    const { data, error } = await supabase
+      .from('testing_transfer_history')
       .upsert(transferEntry, {
-        onConflict: 'job_id',
+        onConflict: 'user_id,job_id',
+        returning: 'representation'
+      });
+
+    if (error) {
+      console.error('Supabase upsert error:', error);
+      throw error;
+    }
+
+    console.log('Successfully saved transfer to testing history:', data);
+    return data;
+  } catch (error) {
+    console.error('Error in saveToTestingHistory:', error);
+    if (error.message?.includes('JWT')) {
+      console.error('JWT/Authentication error detected');
+    }
+    throw error;
+  }
+};
+
+/**
+ * Migrate any existing transfer history from localStorage to Supabase
+ */
+export const migrateLocalStorageToSupabase = async () => {
+  try {
+    // Check if there's any data to migrate
+    const localHistory = localStorage.getItem('transferHistory');
+    if (!localHistory) {
+      console.log('No local history to migrate');
+      return;
+    }
+
+    console.log('Found local history to migrate');
+    const parsedHistory = JSON.parse(localHistory);
+    
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
+
+    // Migrate each transfer
+    for (const transfer of parsedHistory) {
+      await saveTransferToHistory({
+        ...transfer,
+        user_id: user.id
+      });
+    }
+
+    // Clear localStorage after successful migration
+    localStorage.removeItem('transferHistory');
+    console.log('Successfully migrated local history to Supabase');
+  } catch (error) {
+    console.error('Error migrating local history:', error);
+    // Don't throw error to prevent blocking the app
+  }
+};
+
+/**
+ * Get all failed transfers from Supabase for the current user
+ */
+export const getFailedTransfers = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
+
+    const { data, error } = await supabase
+      .from('failed_transfers')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('failed_on', { ascending: false });
+
+    if (error) throw error;
+
+    console.log('Retrieved failed transfers:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching failed transfers:', error);
+    return [];
+  }
+};
+
+/**
+ * Save a failed transfer to Supabase
+ */
+export const saveFailedTransfer = async (transfer) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
+
+    console.log('Saving failed transfer:', transfer);
+    
+    const transferEntry = {
+      user_id: user.id,
+      job_id: transfer.job_id,
+      name: transfer.name,
+      status: transfer.status,
+      source: transfer.source,
+      destination: transfer.destination,
+      total_bytes: transfer.total_bytes,
+      total_files: transfer.total_files || 0,
+      error_message: transfer.error_message,
+      failed_on: transfer.failed_on || new Date().toISOString()
+    };
+
+    const { error } = await supabase
+      .from('failed_transfers')
+      .upsert(transferEntry, {
+        onConflict: 'user_id,job_id',
         returning: 'minimal'
       });
 
     if (error) throw error;
 
-    console.log('Saved transfer to history');
+    console.log('Saved failed transfer');
   } catch (error) {
-    console.error('Error saving transfer to history:', error);
+    console.error('Error saving failed transfer:', error);
+    throw error;
+  }
+};
+
+/**
+ * Clear all failed transfers for the current user
+ */
+export const clearFailedTransfers = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('No authenticated user');
+
+    const { error } = await supabase
+      .from('failed_transfers')
+      .delete()
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+
+    console.log('Cleared failed transfers');
+  } catch (error) {
+    console.error('Error clearing failed transfers:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all transfer history from Supabase for the current user
+ */
+export const getTransferHistory = async () => {
+  try {
+    console.log('Getting current user...');
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      throw new Error('No authenticated user');
+    }
+    
+    console.log('Found user:', user.id);
+
+    console.log('Querying transfer_history table...');
+    const { data, error, count } = await supabase
+      .from('transfer_history')
+      .select('*', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('created_on', { ascending: false }); // Order by creation time to show all transfers
+
+    if (error) {
+      console.error('Supabase query error:', error);
+      throw error;
+    }
+
+    console.log(`Retrieved ${count} transfer history records:`, data);
+    
+    if (!data || data.length === 0) {
+      console.log('No transfer history found for user');
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error('Error in getTransferHistory:', error);
+    if (error.message?.includes('JWT')) {
+      console.error('JWT/Authentication error detected');
+    }
+    return [];
+  }
+};
+
+/**
+ * Save or update a transfer in Supabase
+ */
+export const saveTransferToHistory = async (transfer) => {
+  try {
+    console.log('Getting current user for saving transfer...');
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw userError;
+    }
+    
+    if (!user) {
+      console.error('No authenticated user found');
+      throw new Error('No authenticated user');
+    }
+    
+    console.log('Found user:', user.id);
+    console.log('Saving transfer to history:', JSON.stringify(transfer, null, 2));
+    
+    const transferEntry = {
+      user_id: user.id,
+      job_id: transfer.job_id,
+      name: transfer.name,
+      status: transfer.status,
+      source: transfer.source,
+      destination: transfer.destination,
+      total_bytes: transfer.total_bytes,
+      total_files: transfer.total_files || 0,
+      created_on: transfer.createdOn || new Date().toISOString(),
+      completed_on: transfer.status === 'COMPLETED' ? 
+                   (transfer.completedOn || transfer.lastModifiedOn || new Date().toISOString()) : 
+                   null,
+      last_modified_on: transfer.lastModifiedOn || transfer.modified || new Date().toISOString()
+    };
+
+    console.log('Prepared transfer entry:', JSON.stringify(transferEntry, null, 2));
+
+    // Upsert the transfer (insert if not exists, update if exists)
+    const { data, error } = await supabase
+      .from('transfer_history')
+      .upsert(transferEntry, {
+        onConflict: 'user_id,job_id',
+        returning: 'representation'
+      });
+
+    if (error) {
+      console.error('Supabase upsert error:', error);
+      throw error;
+    }
+
+    console.log('Successfully saved transfer to history:', data);
+
+    // Check if user has notifications enabled and send email if they do
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.notifications_enabled) {
+        await sendTransferNotification(
+          user.user_metadata.notification_email,
+          transferEntry
+        );
+        console.log('Sent email notification for new transfer');
+      }
+    } catch (emailError) {
+      console.error('Error sending email notification:', emailError);
+      // Don't throw the error to avoid disrupting the main flow
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error in saveTransferToHistory:', error);
+    if (error.message?.includes('JWT')) {
+      console.error('JWT/Authentication error detected');
+    }
     throw error;
   }
 };

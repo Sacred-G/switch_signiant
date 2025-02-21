@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SigniantApiAuth, pauseJob, resumeJob, startManualJob } from '../lib/signiant';
+import { saveTransferToHistory } from '../services/transferHistoryService';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Badge } from '../components/ui/badge';
@@ -74,6 +75,25 @@ const AnalyticsPage = () => {
           const transfer = await fetchTransferForJob(job.jobId);
           if (transfer) {
             transfers[job.jobId] = transfer;
+            
+            // Save to transfer history
+            const historyEntry = {
+              job_id: job.jobId,
+              name: job.jobName,
+              status: job.status,
+              source: transfer.source?.path || '',
+              destination: transfer.destination?.path || '',
+              total_bytes: transfer.objectsManifest?.summary?.bytes || 0,
+              total_files: transfer.objectsManifest?.summary?.count || 0,
+              createdOn: transfer.createdOn,
+              lastModifiedOn: job.lastActivity
+            };
+            
+            try {
+              await saveTransferToHistory(historyEntry);
+            } catch (error) {
+              console.error('Error saving to transfer history:', error);
+            }
           }
         })
       );
@@ -197,6 +217,32 @@ const AnalyticsPage = () => {
   const handleDeleteJob = async (jobId) => {
     setActionLoading(true);
     try {
+      // Find the job and transfer data before deletion
+      const job = jobs.find(j => j.jobId === jobId);
+      const transfer = jobTransfers[jobId];
+      
+      // Save to transfer history before deletion
+      if (job) {
+        const historyEntry = {
+          job_id: job.jobId,
+          name: job.jobName,
+          status: 'DELETED', // Mark as deleted in history
+          source: transfer?.source?.path || '',
+          destination: transfer?.destination?.path || '',
+          total_bytes: transfer?.objectsManifest?.summary?.bytes || 0,
+          total_files: transfer?.objectsManifest?.summary?.count || 0,
+          createdOn: transfer?.createdOn,
+          lastModifiedOn: new Date().toISOString()
+        };
+        
+        try {
+          await saveTransferToHistory(historyEntry);
+        } catch (error) {
+          console.error('Error saving deleted job to history:', error);
+        }
+      }
+
+      // Delete the job
       const headers = await SigniantApiAuth.getAuthHeader();
       const response = await fetch(`${config.SIGNIANT_API_URL}/v1/jobs/${jobId}`, {
         method: 'DELETE',

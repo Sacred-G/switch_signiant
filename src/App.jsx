@@ -12,7 +12,13 @@ import FileMonitor from './pages/FileMonitor';
 import AnalyticsPage from './pages/AnalyticsPage';
 import DeliveryStatusPage from './pages/DeliveryStatusPage';
 import TransferHistoryPage from './pages/TransferHistoryPage';
-import { SigniantAuth } from './services/auth.ts';
+import JobSearchPage from './pages/JobSearchPage';
+import RoutesPage from './pages/RoutesPage';
+import StorageProfilesPage from './pages/StorageProfilesPage';
+import UsersPage from './pages/UsersPage';
+import EndpointsPage from './pages/EndpointsPage';
+import NotificationsPage from './pages/NotificationsPage';
+import { supabase } from './lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 // Global Error Boundary Component
@@ -51,24 +57,20 @@ const App = () => {
 
   useEffect(() => {
     console.log('App: useEffect triggered');
-    // Initialize authentication state
-    const initAuth = async () => {
+    // Initialize authentication state and webhook subscription
+    const initApp = async () => {
       try {
-        console.log('App: Initializing authentication');
-        await SigniantAuth.initialize();
+        // Only initialize Supabase auth state
+        const { data: { session } } = await supabase.auth.getSession();
         
         // Set up auth state listener
-        const { data: authListener } = SigniantAuth.onAuthStateChange(async (event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
           console.log('Auth state changed:', event);
           
-          if (session) {
-            // Store session in electron if available
-            if (window.electronAPI) {
+          if (window.electronAPI) {
+            if (session) {
               await window.electronAPI.storeSession(session);
-            }
-          } else {
-            // Clear session from electron store if available
-            if (window.electronAPI) {
+            } else {
               await window.electronAPI.clearSession();
             }
           }
@@ -87,7 +89,7 @@ const App = () => {
       }
     };
 
-    initAuth();
+    initApp();
 
     // Handle window controls
     const setupWindowControls = () => {
@@ -136,20 +138,14 @@ const App = () => {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <DashboardContainer />
-              </ProtectedRoute>
-            }
-          >
+          <Route path="/" element={<ProtectedRoute><DashboardContainer /></ProtectedRoute>}>
             <Route index element={<Navigate to="/transfers" replace />} />
             <Route path="jobs" element={<JobsPage />} />
             <Route path="transfers" element={<TransfersPage />} />
             <Route path="transfers/history" element={<TransferHistoryPage />} />
             <Route path="files" element={<FileMonitor />} />
             <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="job-search" element={<JobSearchPage />} />
             <Route 
               path="delivery-status" 
               element={
@@ -158,6 +154,12 @@ const App = () => {
                 </React.Suspense>
               } 
             />
+            {/* Management Routes */}
+            <Route path="routes" element={<RoutesPage />} />
+            <Route path="storage" element={<StorageProfilesPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="endpoints" element={<EndpointsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
           </Route>
         </Routes>
       </Router>

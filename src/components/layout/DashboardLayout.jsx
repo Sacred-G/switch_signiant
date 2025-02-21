@@ -1,5 +1,9 @@
 import PropTypes from 'prop-types';
-import { List, Home, Repeat, LogOut, Sun, Moon, Briefcase, Package, BarChart, History } from 'lucide-react';
+import { 
+  List, Home, Repeat, LogOut, Sun, Moon, Briefcase, Package, 
+  BarChart, History, Search, Route, Database, Users, Network, 
+  Settings
+} from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SigniantAuth } from '../../services/auth';
 import { useTheme } from '../ThemeProvider';
@@ -81,11 +85,27 @@ const DashboardLayout = ({ children }) => {
           </button>
         </div>
         <nav className="mt-6 flex flex-col justify-between h-[calc(100vh-100px)]">
-          <div>
-            <SidebarItem to="/transfers" icon={<Repeat size={20} />} text="Create New Transfers" />
-            <SidebarItem to="/transfers/history" icon={<History size={20} />} text="Transfer History" />
-            <SidebarItem to="/delivery-status" icon={<Package size={20} />} text="Delivery Status" />
-            <SidebarItem to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
+          <div className="space-y-4">
+            <div key="transfers-section">
+              <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase">
+                Transfers
+              </div>
+              <SidebarItem key="transfers" to="/transfers" icon={<Repeat size={20} />} text="Create New Transfers" />
+              <SidebarItem key="history" to="/transfers/history" icon={<History size={20} />} text="Transfer History" />
+              <SidebarItem key="job-search" to="/job-search" icon={<Search size={20} />} text="Job Search" />
+              <SidebarItem key="delivery-status" to="/delivery-status" icon={<Package size={20} />} text="Delivery Status" />
+              <SidebarItem key="analytics" to="/analytics" icon={<BarChart size={20} />} text="Analytics" />
+            </div>
+
+            <div key="management-section">
+              <div className="px-6 py-2 text-xs font-semibold text-gray-400 uppercase">
+                Management
+              </div>
+              <SidebarItem key="routes" to="/routes" icon={<Route size={20} />} text="Routes" />
+              <SidebarItem key="storage" to="/storage" icon={<Database size={20} />} text="Storage Profiles" />
+              <SidebarItem key="users" to="/users" icon={<Users size={20} />} text="Users" />
+              <SidebarItem key="endpoints" to="/endpoints" icon={<Network size={20} />} text="Endpoints" />
+            </div>
           </div>
           <div className="mb-6">
             <SidebarItem 

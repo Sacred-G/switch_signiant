@@ -5,16 +5,16 @@ const CLIENT_SECRET = config.SIGNIANT_CLIENT_SECRET;
 const BASE_URL = config.SIGNIANT_API_URL;
 
 export class SigniantApiAuth {
+  static _instance = null;
+
   constructor() {
     if (SigniantApiAuth._instance) {
       return SigniantApiAuth._instance;
     }
-    
+    SigniantApiAuth._instance = this;
     this.tokenUrl = `${BASE_URL}/oauth/token`;
     this.accessToken = null;
     this.tokenExpiry = null;
-    
-    SigniantApiAuth._instance = this;
   }
 
   static getInstance() {
@@ -58,11 +58,10 @@ export class SigniantApiAuth {
       const data = await response.json();
       console.log('Successfully obtained Signiant access token');
       this.accessToken = data.access_token;
-      // Set expiry to 5 minutes before actual expiry to ensure token refreshes
       this.tokenExpiry = new Date(Date.now() + (data.expires_in - 300) * 1000);
     } catch (error) {
       console.error('Signiant token refresh error:', error);
-      throw new Error(`Failed to obtain Signiant access token: ${error.message}`);
+      throw new Error(`Failed to obtain Signiant access token: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
@@ -76,17 +75,85 @@ export class SigniantApiAuth {
   }
 }
 
-// Initialize the singleton instance
-SigniantApiAuth._instance = null;
-
-// Helper function to get combined headers for API calls
 export const getSigniantHeaders = async () => {
   return await SigniantApiAuth.getAuthHeader();
 };
 
-// Function to delete a job with required confirmation
+export const startManualJob = async (jobId, isDirectory = true, relativePath = "/") => {
+  try {
+    const headers = await getSigniantHeaders();
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}/deliveries`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        objects: [
+          {
+            relativePath,
+            isDirectory
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to start job: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error starting manual job:', error);
+    throw error;
+  }
+};
+
+export const pauseJob = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: true
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to pause job: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error pausing job:', error);
+    throw error;
+  }
+};
+
+export const resumeJob = async (jobId) => {
+  try {
+    const headers = await getSigniantHeaders();
+    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({
+        paused: false
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to resume job: ${errorText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error resuming job:', error);
+    throw error;
+  }
+};
+
 export const deleteJob = async (jobId, confirmationText) => {
-  // Require explicit confirmation text "DELETE" to proceed
   if (confirmationText !== "DELETE") {
     throw new Error("Deletion not confirmed. Please type 'DELETE' to confirm.");
   }
@@ -110,12 +177,9 @@ export const deleteJob = async (jobId, confirmationText) => {
   }
 };
 
-// Function to update job trigger to HOT_FOLDER
 export const updateJobTrigger = async (jobId) => {
   try {
     const headers = await getSigniantHeaders();
-    
-    // First get the current job to preserve other settings
     const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
       headers
     });
@@ -126,7 +190,6 @@ export const updateJobTrigger = async (jobId) => {
 
     const job = await getResponse.json();
     
-    // Update the job with the hot folder configuration using PATCH
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
       method: 'PATCH',
       headers,
@@ -160,7 +223,6 @@ export const updateJobTrigger = async (jobId) => {
   }
 };
 
-// Function to get transfer details including progress
 export const getTransferDetails = async (jobId) => {
   try {
     const headers = await getSigniantHeaders();
@@ -179,6 +241,7 @@ export const getTransferDetails = async (jobId) => {
 
     const transfer = data.items[0];
     const progress = transfer.transferProgress;
+    const totalCount = progress.transferred.count + progress.remaining.count;
 
     return {
       transferId: transfer.transferId,
@@ -187,8 +250,10 @@ export const getTransferDetails = async (jobId) => {
       startTime: transfer.createdOn,
       bytesTransferred: progress.transferred.bytes,
       filesRemaining: progress.remaining.count,
-      totalResultCount: progress.transferred.count + progress.remaining.count,
-      percentComplete: progress.transferred.count / (progress.transferred.count + progress.remaining.count) * 100
+      totalResultCount: totalCount,
+      percentComplete: totalCount > 0 ? (progress.transferred.count / totalCount) * 100 : 0,
+      objectsManifest: transfer.objectsManifest,
+      transferProgress: progress
     };
   } catch (error) {
     console.error('Error fetching transfer details:', error);
@@ -196,191 +261,17 @@ export const getTransferDetails = async (jobId) => {
   }
 };
 
-// Function to pause a job
-export const pauseJob = async (jobId) => {
-  try {
-    const headers = await getSigniantHeaders();
-    
-    // First get the current job to preserve other settings
-    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-
-    if (!getResponse.ok) {
-      throw new Error('Failed to fetch job details');
-    }
-
-    const job = await getResponse.json();
-    
-    // Update the job to set paused state while preserving all other settings
-    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({
-        paused: true,
-        actions: job.actions,
-        triggers: job.triggers,
-        name: job.name,
-        // Include any transfer options if they exist
-        ...(job.actions[0]?.data?.transferOptions && {
-          transferOptions: job.actions[0].data.transferOptions
-        })
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to pause job: ${errorText}`);
-    }
-
-    // Verify the job was paused
-    const verifyResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-    
-    if (!verifyResponse.ok) {
-      throw new Error('Failed to verify job pause status');
-    }
-
-    const verifiedJob = await verifyResponse.json();
-    if (!verifiedJob.paused) {
-      throw new Error('Job pause operation did not take effect');
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error pausing job:', error);
-    throw error;
-  }
-};
-
-// Function to resume a job
-export const resumeJob = async (jobId) => {
-  try {
-    const headers = await getSigniantHeaders();
-    
-    // First get the current job to preserve other settings
-    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-
-    if (!getResponse.ok) {
-      throw new Error('Failed to fetch job details');
-    }
-
-    const job = await getResponse.json();
-    
-    // Update the job to unset paused state while preserving all other settings
-    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      method: 'PATCH',
-      headers,
-      body: JSON.stringify({
-        paused: false,
-        actions: job.actions,
-        triggers: job.triggers,
-        name: job.name,
-        // Include any transfer options if they exist
-        ...(job.actions[0]?.data?.transferOptions && {
-          transferOptions: job.actions[0].data.transferOptions
-        })
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to resume job: ${errorText}`);
-    }
-
-    // Verify the job was resumed
-    const verifyResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-    
-    if (!verifyResponse.ok) {
-      throw new Error('Failed to verify job resume status');
-    }
-
-    const verifiedJob = await verifyResponse.json();
-    if (verifiedJob.paused) {
-      throw new Error('Job resume operation did not take effect');
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error resuming job:', error);
-    throw error;
-  }
-};
-
-// Function to start a manual job
-export const startManualJob = async (jobId) => {
-  try {
-    const headers = await getSigniantHeaders();
-    
-    // First get the job details to get the source path
-    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-
-    if (!getResponse.ok) {
-      throw new Error('Failed to fetch job details');
-    }
-
-    const job = await getResponse.json();
-    
-    // Create a delivery request to start the job
-    const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}/deliveries`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        objects: [{
-          relativePath: "/",
-          isDirectory: true
-        }]
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to start manual job: ${errorText}`);
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error starting manual job:', error);
-    throw error;
-  }
-};
-
-// Function to pause a folder (change from HOT_FOLDER to MANUAL)
 export const pauseFolder = async (jobId) => {
   try {
     const headers = await getSigniantHeaders();
-    
-    // First get the current job to preserve other settings
-    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-
-    if (!getResponse.ok) {
-      throw new Error('Failed to fetch job details');
-    }
-
-    const job = await getResponse.json();
-    
-    // Update the job to MANUAL trigger and set paused to true
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
       method: 'PATCH',
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        paused: true,
-        actions: job.actions,
-        triggers: [{
-          type: "MANUAL",
-          data: {
-            source: job.actions[0].data.source
-          }
-        }]
+        paused: true
       })
     });
 
@@ -396,41 +287,17 @@ export const pauseFolder = async (jobId) => {
   }
 };
 
-// Function to start a folder (change from MANUAL to HOT_FOLDER)
 export const startFolder = async (jobId) => {
   try {
     const headers = await getSigniantHeaders();
-    
-    // First get the current job to preserve other settings
-    const getResponse = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
-      headers
-    });
-
-    if (!getResponse.ok) {
-      throw new Error('Failed to fetch job details');
-    }
-
-    const job = await getResponse.json();
-    
-    // Update the job to HOT_FOLDER trigger and set paused to false
     const response = await fetch(`${BASE_URL}/v1/jobs/${jobId}`, {
       method: 'PATCH',
-      headers,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        paused: false,
-        actions: job.actions,
-        triggers: [{
-          type: "HOT_FOLDER",
-          events: [
-            "hotFolder.files.discovered",
-            "hotFolder.files.created",
-            "hotFolder.files.modified",
-            "hotFolder.signature.changed"
-          ],
-          data: {
-            source: job.actions[0].data.source
-          }
-        }]
+        paused: false
       })
     });
 

@@ -14,6 +14,7 @@ import {
 } from '../components/ui/select';
 import { Pause, Play, RefreshCw, Search, Loader2, Flame, X } from 'lucide-react';
 import { getSigniantHeaders, startManualJob, pauseJob, resumeJob } from '../lib/signiant';
+import { saveTransferToHistory } from '../services/transferHistoryService';
 
 const formatDate = (dateString, useRelative = false) => {
   if (!dateString) return 'N/A';
@@ -126,12 +127,70 @@ const TransferManager = () => {
         profilesResponse.json()
       ]);
 
-const enrichedTransfers = jobsData.items.map(job => ({
-  ...job,
-  sourceProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.source?.storageProfileId),
-  destinationProfile: profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.destination?.storageProfileId),
-  destinationUrl: job.actions?.[0]?.data?.destination?.url || 'URL not available'
-}));
+      const enrichedTransfers = jobsData.items.map(job => {
+        // Find the profiles
+        const sourceProfile = profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.source?.storageProfileId);
+        const destinationProfile = profilesData.items.find(p => p.storageProfileId === job.actions?.[0]?.data?.destination?.storageProfileId);
+        
+        // Get file stats
+        const totalBytes = job.actions?.[0]?.data?.transferredBytes || 
+                         job.actions?.[0]?.data?.totalBytes || 
+                         job.totalBytes || 0;
+                         
+        const totalFiles = job.actions?.[0]?.data?.transferredCount || 
+                         job.actions?.[0]?.data?.totalCount || 
+                         job.totalResultCount || 0;
+
+        return {
+          ...job,
+          sourceProfile,
+          destinationProfile,
+          destinationUrl: job.actions?.[0]?.data?.destination?.url || 'URL not available',
+          totalBytes,
+          totalFiles
+        };
+      });
+
+      // Save completed and in-progress transfers to history
+      for (const transfer of enrichedTransfers) {
+        if (transfer.status === 'COMPLETED' || 
+            (transfer.status === 'IN_PROGRESS' && transfer.totalResultCount > 0 && 
+             transfer.filesRemaining === 0)) {
+          try {
+            const historyEntry = {
+              job_id: transfer.jobId,
+              name: transfer.name,
+              status: transfer.status,
+              source: transfer.sourceProfile?.name || 
+                     transfer.actions?.[0]?.data?.source?.displayName ||
+                     transfer.actions?.[0]?.data?.source?.name || 
+                     'Unknown',
+              destination: transfer.destinationProfile?.name || 
+                         transfer.destinationUrl || 
+                         transfer.actions?.[0]?.data?.destination?.displayName ||
+                         transfer.actions?.[0]?.data?.destination?.name || 
+                         'Unknown',
+              total_bytes: transfer.totalBytes || 
+                          transfer.actions?.[0]?.data?.transferredBytes || 
+                          transfer.actions?.[0]?.data?.totalBytes || 0,
+              total_files: transfer.totalFiles || 
+                          transfer.actions?.[0]?.data?.transferredCount || 
+                          transfer.actions?.[0]?.data?.totalCount || 
+                          transfer.totalResultCount || 0,
+              created_on: transfer.createdOn || new Date().toISOString(),
+              completed_on: transfer.status === 'COMPLETED' ? 
+                          (transfer.completedOn || transfer.lastModifiedOn || new Date().toISOString()) : 
+                          null,
+              last_modified_on: transfer.lastModifiedOn || new Date().toISOString()
+            };
+            
+            console.log('Saving completed transfer to history:', historyEntry);
+            await saveTransferToHistory(historyEntry);
+          } catch (error) {
+            console.error('Error saving transfer to history:', error);
+          }
+        }
+      }
 
       setTransfers(enrichedTransfers);
     } catch (error) {

@@ -1,0 +1,117 @@
+JetTransferEmailSubscriptionResponseCommon{
+accountId*	string($uuid)
+example: 135686bb-56a9-95c6-8735-3f965deea3f7
+subscriptionId*	string($uuid)
+example: 295686bb-22a9-44c6-8750-3f965deea3f8
+createdOn*	string
+example: 2020-12-08T16:55:46.986Z
+lastModifiedOn*	string
+example: 2020-12-08T16:55:46.986Z
+notificationMethod*	string
+The subscribed entites will receive email notifications for events.
+
+Enum:
+[ WEBHOOK, EMAIL, EMAIL ]
+notificationConfig*	{
+description:	
+The config for email notification.
+
+recipients*	[
+minimum: 1
+maximum: 1
+Subscribed entities will receive event notification(s) at this email address
+
+string
+example: List [ "user@example.com" ]]
+aggregationConfig	{
+description:	
+Contains properties to modify aggregation behaviour
+
+aggregationWindowInSeconds*	number
+minimum: 600
+maximum: 86400
+example: 600
+Amount of time during which all incoming notifications for this subscription will be aggregated
+
+}
+}
+eventCategory*	string
+A subscription allows notifications to be sent about a specified category of events. The eventTypes array allows the subscription scope to be narrowed using a list of event types for that event category. If no events are specified, a notification is sent for all associated events.
+
+Enum:
+[ ENDPOINT, JET_DELIVERY, JET_JOB, JET_TRANSFER, STORAGE_PROFILE, JET_TRANSFER ]
+metadata	{
+description:	
+Metadata that is associated with the subscription.
+
+}
+example: OrderedMap { "sampleMetadataProperty": true }
+eventFilterConfig*	{
+jobId*	string($uuid)
+example: 9c0c2c99-4f32-4d18-95da-d83642dd515d
+Events associated with the job with this id will be returned by the subscription.
+
+eventTypes*	[
+minimum: 1
+maximum: 3
+List of terminal event types from JET_TRANSFER event category
+
+string
+Enum:
+[ com.signiant.jet.transfer.queued, com.signiant.jet.transfer.inProgress, com.signiant.jet.transfer.failed, com.signiant.jet.transfer.canceled, com.signiant.jet.transfer.completed, com.signiant.jet.transfer.failed, com.signiant.jet.transfer.canceled, com.signiant.jet.transfer.completed ]
+]
+}
+}
+JetDeliveryEmailSubscriptionResponseCommon{
+accountId*	string($uuid)
+example: 135686bb-56a9-95c6-8735-3f965deea3f7
+subscriptionId*	string($uuid)
+example: 295686bb-22a9-44c6-8750-3f965deea3f8
+createdOn*	string
+example: 2020-12-08T16:55:46.986Z
+lastModifiedOn*	string
+example: 2020-12-08T16:55:46.986Z
+notificationMethod*	string
+The subscribed entites will receive email notifications for events.
+
+Enum:
+[ WEBHOOK, EMAIL, EMAIL ]
+notificationConfig*	{
+description:	
+The config for email notification.
+
+recipients*	[
+minimum: 1
+maximum: 1
+Subscribed entities will receive event notification(s) at this email address
+
+string
+example: List [ "user@example.com" ]]
+}
+eventCategory*	string
+A subscription allows notifications to be sent about a specified category of events. The eventTypes array allows the subscription scope to be narrowed using a list of event types for that event category. If no events are specified, a notification is sent for all associated events.
+
+Enum:
+[ ENDPOINT, JET_DELIVERY, JET_JOB, JET_TRANSFER, STORAGE_PROFILE, JET_DELIVERY ]
+metadata	{
+description:	
+Metadata that is associated with the subscription.
+
+}
+example: OrderedMap { "sampleMetadataProperty": true }
+eventFilterConfig*	{
+jobId*	string($uuid)
+example: 9c0c2c99-4f32-4d18-95da-d83642dd515d
+Events associated with the job with this id will be returned by the subscription.
+
+eventTypes*	[
+minimum: 1
+maximum: 2
+List of terminal event types from JET_DELIVERY event category
+
+string
+Enum:
+[ com.signiant.jet.delivery.created, com.signiant.jet.delivery.inProgress, com.signiant.jet.delivery.queued, com.signiant.jet.delivery.scheduled, com.signiant.jet.delivery.failed, com.signiant.jet.delivery.completed, com.signiant.jet.delivery.completed, com.signiant.jet.delivery.failed ]
+]
+}
+}

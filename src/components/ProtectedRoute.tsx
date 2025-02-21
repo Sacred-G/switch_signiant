@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { SigniantAuth } from '../services/auth';
+import { supabase } from '../lib/supabase';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -15,8 +15,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const isAuthed = await SigniantAuth.isAuthenticated();
-        setIsAuthenticated(isAuthed);
+        // Only check Supabase auth here, let protected pages handle their own additional auth needs
+        const { data: { user } } = await supabase.auth.getUser();
+        setIsAuthenticated(!!user);
       } catch (error) {
         console.error('Auth check failed:', error);
         setIsAuthenticated(false);

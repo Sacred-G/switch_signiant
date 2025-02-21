@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS transfer_history (
   destination TEXT,
   total_bytes BIGINT,
   total_files INTEGER,
-  created_on TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_on TIMESTAMP WITH TIME ZONE,
   UNIQUE(user_id, job_id)
 );
 
@@ -20,8 +20,14 @@ CREATE INDEX IF NOT EXISTS transfer_history_created_on_idx ON transfer_history(c
 -- Set up RLS (Row Level Security)
 ALTER TABLE transfer_history ENABLE ROW LEVEL SECURITY;
 
--- Create policy to allow users to only see their own transfers
-CREATE POLICY "Users can only access their own transfers"
-  ON transfer_history
-  FOR ALL
-  USING (auth.uid() = user_id);
+-- Drop and recreate policy to allow users to only see their own transfers
+DO $$ 
+BEGIN
+    DROP POLICY IF EXISTS "Users can only access their own transfers" ON transfer_history;
+    DROP POLICY IF EXISTS "Users can view their own transfers" ON transfer_history;
+    
+    CREATE POLICY "Users can only access their own transfers"
+    ON transfer_history
+    FOR ALL
+    USING (auth.uid() = user_id);
+END $$;

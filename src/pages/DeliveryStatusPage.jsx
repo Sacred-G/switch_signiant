@@ -48,10 +48,29 @@ const DeliveryStatusPage = () => {
         setLoading(true);
         setError(null);
 
-        const jobs = await getAllJobs();
+        console.log('Fetching jobs data...');
+        const jobs = await getAllJobs({
+          // Include completed jobs from the last 30 days
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          endDate: new Date().toISOString()
+        });
         console.log('Fetched jobs data:', jobs);
 
-        setJobsData(jobs);
+        if (!jobs || jobs.length === 0) {
+          console.log('No jobs data returned');
+          setJobsData([]);
+          return;
+        }
+
+        // Filter jobs to show only those with transfers or files
+        const jobsWithTransfers = jobs.filter(job => 
+          (job.activeTransfers && job.activeTransfers.length > 0) || 
+          (job.files?.inProgress && job.files.inProgress.length > 0) ||
+          (job.files?.completed && job.files.completed.length > 0)
+        );
+
+        console.log('Jobs with transfers:', jobsWithTransfers);
+        setJobsData(jobsWithTransfers);
       } catch (err) {
         console.error('Error in main data fetch:', err);
         setError(err.message || 'Failed to fetch data');
@@ -60,11 +79,19 @@ const DeliveryStatusPage = () => {
       }
     };
 
+    // Initial fetch
     fetchData();
 
     // Refresh data every 30 seconds
-    const intervalId = setInterval(fetchData, 30000);
-    return () => clearInterval(intervalId);
+    const intervalId = setInterval(() => {
+      console.log('Running scheduled data refresh...');
+      fetchData();
+    }, 30000);
+
+    return () => {
+      console.log('Cleaning up interval');
+      clearInterval(intervalId);
+    };
   }, []);
 
   if (loading) {
@@ -93,19 +120,22 @@ const DeliveryStatusPage = () => {
     );
   }
 
-  // Filter jobs to show only those with transfers or files
-  const jobsWithTransfers = jobsData.filter(job => 
-    (job.activeTransfers && job.activeTransfers.length > 0) || 
-    (job.files?.inProgress && job.files.inProgress.length > 0) ||
-    (job.files?.completed && job.files.completed.length > 0)
-  );
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Transfer Status</h1>
       <div className="grid gap-4">
-        {jobsWithTransfers.map((job) => (
-          <Card key={job.jobId}>
+        {jobsData.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-gray-500 text-center">
+                No active transfers found. Any ongoing or completed transfers will appear here.
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          jobsData.map((job) => (
+            <Card key={job.jobId}>
             <CardHeader>
               <CardTitle className="flex flex-col gap-1">
                 <div className="text-lg font-bold">
@@ -231,13 +261,7 @@ const DeliveryStatusPage = () => {
               </div>
             </CardContent>
           </Card>
-        ))}
-        {jobsWithTransfers.length === 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-gray-500">No transfers found</div>
-            </CardContent>
-          </Card>
+          ))
         )}
       </div>
     </div>

@@ -1,10 +1,9 @@
-const isDev = process.env.NODE_ENV === 'development';
 
-const config = {
-  SIGNIANT_API_URL: 'https://platform-api-service.services.cloud.signiant.com',
-  SIGNIANT_CLIENT_ID: 'FPZoq0NMeJ9LBSzkQA2EwJtisUqUMThb',
-  SIGNIANT_CLIENT_SECRET: 'JIS3YY45ZUGrX8jt1GDz2htDxHpTbkhTQufZZYa75DCt6w0Jbc1bUItRk3BGSMYn',
-  env: isDev ? 'development' : 'production'
+export default {
+  SIGNIANT_API_URL: import.meta.env.VITE_SIGNIANT_API_URL || 'https://api.signiant.com',
+  SIGNIANT_CLIENT_ID: import.meta.env.VITE_SIGNIANT_CLIENT_ID,
+  SIGNIANT_CLIENT_SECRET: import.meta.env.VITE_SIGNIANT_CLIENT_SECRET,
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY,
+  SUPABASE_SERVICE_ROLE_KEY: import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY
 };
-
-export default config;

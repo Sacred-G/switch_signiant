@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Loader2 } from 'lucide-react';
-import { SigniantAuth } from '../services/auth';
+import { supabase } from '../lib/supabase';
 
 const RegisterPage = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +18,22 @@ const RegisterPage = () => {
     setError('');
 
     try {
-      await SigniantAuth.register(email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: window.electronAPI?.isDevelopment?.()
+            ? 'http://localhost:5173/login'
+            : `${window.location.origin}/login`
+        }
+      });
+      
+      if (error) throw error;
+
+      if (data?.user?.identities?.length === 0) {
+        throw new Error('Email already registered. Please try logging in instead.');
+      }
+
       navigate('/login', { 
         replace: true,
         state: { message: 'Please check your email to confirm your account before logging in.' }
